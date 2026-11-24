@@ -1,0 +1,21 @@
+{
+  "name": "episodic_bank",
+  "arm": "reasoningbank",
+  "retrieval": "embedding",
+  "verification": "none",
+  "crud": "dedup",
+  "utility": true,
+  "order": "shuffled",
+  "seed": 11,
+  "n_evolution": 120,
+  "parallel": 6,
+  "novel_only": true,
+  "probe_pool": 80,
+  "snapshot_every": 20,
+  "checkpoints": [0, 40, 80, 120],
+  "memory_budget_tokens": 1024,
+  "max_tokens": 700,
+  "solver_seed": 0,
+  "ports": [8011, 8012, 8013, 8014],
+  "teacher_max_tokens": 10000
+}

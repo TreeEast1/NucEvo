@@ -1,0 +1,21 @@
+{
+  "benchmark": "NucEvo-Bench v1",
+  "partition": "test",
+  "verified_bank": "assets/banks/verified_bank.json",
+  "episodic_bank": "assets/banks/episodic_bank.json",
+  "budget_chars": 4096,
+  "ports": [8011, 8012, 8013, 8014],
+  "workers": 16,
+  "max_tokens": 700,
+  "solver_seed": 0,
+  "order_seed": 771122,
+  "policies": [
+    "none",
+    "generic",
+    "reasoningbank",
+    "verified_only",
+    "nucevo",
+    "paired_verified",
+    "semantic_episodic"
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "benchmark": "NucEvo-Bench v1 (Test Partition: 800 tasks)",
+  "solver": "Qwen3-4B-Instruct-2507 (frozen, greedy, seed=0, max_tokens=700)",
+  "retriever_encoder": "BAAI/bge-small-en-v1.5 (frozen)",
+  "simulator": "OpenModelica 1.27.1",
+  "memory_char_budget": 4096,
+  "logical_scores": 5600,
+  "distinct_episodes": 3842,
+  "banks": {
+    "verified_bank": {
+      "path": "assets/banks/verified_bank.json",
+      "sha256": "c2a5d3184ad73ce294a596196f7c27ee2f521c2db21e90c8af4fc90569abfd75",
+      "active_items": 40
+    },
+    "episodic_bank": {
+      "path": "assets/banks/episodic_bank.json",
+      "sha256": "831ad0f283ba01737c27cd2c0e9da69366edc63cf6ff4d5f7dd39efbdf5c5ec9",
+      "active_items": 87
+    }
+  },
+  "primary_comparisons": {
+    "nucevo_vs_no_memory": {
+      "n": 800,
+      "first": 247,
+      "second": 126,
+      "only_first": 148,
+      "only_second": 27,
+      "p_two_sided": 2.0561191008256307e-21
+    },
+    "nucevo_vs_reasoningbank": {
+      "n": 800,
+      "first": 247,
+      "second": 177,
+      "only_first": 118,
+      "only_second": 48,
+      "p_two_sided": 5.480870276242297e-08
+    },
+    "nucevo_vs_verified_only": {
+      "n": 800,
+      "first": 247,
+      "second": 202,
+      "only_first": 66,
+      "only_second": 21,
+      "p_two_sided": 1.410078387314761e-06
+    },
+    "nucevo_vs_generic": {
+      "n": 800,
+      "first": 247,
+      "second": 120,
+      "only_first": 153,
+      "only_second": 26,
+      "p_two_sided": 4.323794758081699e-23
+    }
+  },
+  "splits": {
+    "id_test": {
+      "none": 49,
+      "generic": 53,
+      "rb": 85,
+      "ours": 106,
+      "hybrid": 125,
+      "own_pair": 106,
+      "rb_embed": 63
+    },
+    "ood_near": {
+      "none": 47,
+      "generic": 47,
+      "rb": 52,
+      "ours": 59,
+      "hybrid": 76,
+      "own_pair": 59,
+      "rb_embed": 42
+    },
+    "ood_far": {
+      "none": 21,
+      "generic": 13,
+      "rb": 30,
+      "ours": 29,
+      "hybrid": 36,
+      "own_pair": 29,
+      "rb_embed": 28
+    },
+    "stress": {
+      "none": 9,
+      "generic": 7,
+      "rb": 10,
+      "ours": 8,
+      "hybrid": 10,
+      "own_pair": 8,
+      "rb_embed": 9
+    }
+  },
+  "difficulty_tiers": {
+    "Easy": {
+      "none": 14,
+      "generic": 10,
+      "rb": 24,
+      "ours": 43,
+      "hybrid": 47,
+      "own_pair": 43,
+      "rb_embed": 20
+    },
+    "Medium": {
+      "none": 31,
+      "generic": 28,
+      "rb": 41,
+      "ours": 55,
+      "hybrid": 68,
+      "own_pair": 55,
+      "rb_embed": 38
+    },
+    "Hard": {
+      "none": 55,
+      "generic": 61,
+      "rb": 86,
+      "ours": 88,
+      "hybrid": 112,
+      "own_pair": 88,
+      "rb_embed": 66
+    },
+    "Challenge": {
+      "none": 26,
+      "generic": 21,
+      "rb": 26,
+      "ours": 16,
+      "hybrid": 20,
+      "own_pair": 16,
+      "rb_embed": 18
+    }
+  },
+  "task_families": {
+    "repair": {
+      "none": 98,
+      "generic": 86,
+      "rb": 130,
+      "ours": 91,
+      "hybrid": 136,
+      "own_pair": 91,
+      "rb_embed": 95
+    },
+    "assemble": {
+      "none": 1,
+      "generic": 6,
+      "rb": 7,
+      "ours": 86,
+      "hybrid": 86,
+      "own_pair": 86,
+      "rb_embed": 7
+    },
+    "tune": {
+      "none": 15,
+      "generic": 15,
+      "rb": 18,
+      "ours": 12,
+      "hybrid": 12,
+      "own_pair": 12,
+      "rb_embed": 18
+    },
+    "diagnose": {
+      "none": 2,
+      "generic": 5,
+      "rb": 9,
+      "ours": 5,
+      "hybrid": 5,
+      "own_pair": 5,
+      "rb_embed": 9
+    },
+    "multistep": {
+      "none": 10,
+      "generic": 8,
+      "rb": 13,
+      "ours": 8,
+      "hybrid": 8,
+      "own_pair": 8,
+      "rb_embed": 13
+    }
+  }
+}

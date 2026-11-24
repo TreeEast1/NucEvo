@@ -1,0 +1,3877 @@
+{
+ "version": 9,
+ "seq": 226,
+ "label": "checkpoint 120",
+ "created_at": "2026-11-06T18:56:53+00:00",
+ "meta": {
+  "arm": "nucevolve",
+  "n_tasks": 120,
+  "config": {
+   "name": "stage1_nucevolve",
+   "arm": "nucevolve",
+   "retrieval": "full",
+   "memory_budget_tokens": 1024,
+   "teacher_mode": "per_task",
+   "batch_k": 1,
+   "verification": "counterfactual",
+   "crud": "full",
+   "utility": true,
+   "snapshot_every": 20,
+   "teacher_temperature": 0.0,
+   "max_steps": null,
+   "parallel": 6,
+   "allow_types": null,
+   "novel_only": true,
+   "max_items": null
+  },
+  "teacher": {
+   "calls": 21,
+   "cached": 0,
+   "errors": 0,
+   "prompt_tokens": 276812,
+   "completion_tokens": 66013,
+   "reasoning_tokens": 0,
+   "wall_time_s": 579.87
+  }
+ },
+ "items": [
+  {
+   "memory_id": "MEM_3BE5C5F4",
+   "type": "rule",
+   "title": "FuelPin.Tcool is driven by Channel.Tavg",
+   "description": "In FuelPin/Channel heat-transfer pairs, FuelPin.Tcool must be driven by the coolant temperature output of the Channel receiving that FuelPin's Qcool, specifically Channel.Tavg in these models. Cross-driving Tavg between parallel branches can leave bulk temperatures and mass/energy balances apparently valid while fuel temperatures miss their targets, because each pin sees the wrong coolant temperature. This is inferred from the port table and confirmed by Ep2, where swapping ch1.Tavg/ch2.Tavg back to their paired pins corrected Tf1/Tf2 without changing parameters.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "FuelPin.Tcool connected to Channel.Tin, Channel.Tout, Const.y, or multiple sources; fuel/clad temperatures off while coolant outlet may still look plausible.",
+   "recommended_strategy": "For each branch, trace Qcool -> Channel.Q_fuel and then connect that same Channel.Tavg -> the originating FuelPin.Tcool; do not use Channel.Tin, Channel.Tout, SteamGenerator.Tout, or another branch's Tavg as the pin coolant temperature.",
+   "action_template": [
+    "connect(<channel>.Tavg, <fuelpin>.Tcool)",
+    "remove_connect(<other_source>.<port>, <fuelpin>.Tcool)"
+   ],
+   "known_pitfalls": [
+    "Adding a second Tcool connection while leaving the original one causes 'Too many equations' even if all inputs appear connected.",
+    "Replacing a connection with the same old/new pair is a no-op and does not reverse direction."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_R_0482",
+     "EVO_loop_A_0204",
+     "EVO_loop_T_0435",
+     "EVO_single_T_0077"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.93,
+    "supporting_topologies": [
+     "loop"
+    ]
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 9,
+    "used": 9,
+    "positive_transfer": 3,
+    "negative_transfer": 6,
+    "tasks_seen": 9
+   },
+   "status": "verified",
+   "version": 3,
+   "created_at": "2026-11-06T18:31:33+00:00",
+   "updated_at": "2026-11-06T18:36:38+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:35:48+00:00",
+      "reason": "task EVO_loop_T_0435",
+      "before": {
+       "description": "For FuelPin/Channel heat-transfer pairs, FuelPin.Tcool should see the Channel.Tavg output, not Channel.Tin, Channel.Tout, Const.y, or FuelPin outputs. The fuel pin heat balance uses the local bulk coolant temperature; Channel.Tavg is the corresponding computed average coolant temperature. This rule does not apply if a library explicitly defines a different coolant-temperature input, but the given port tables and successful episodes support this component-type relation.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "tune",
+         "diagnose"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "For each FuelPin, connect its paired Channel.Tavg to FuelPin.Tcool exactly once. Remove any additional Tcool drivers before simulating, because duplicate input drivers create over-determined systems."
+      }
+     },
+     {
+      "from_version": 2,
+      "at": "2026-11-06T18:36:38+00:00",
+      "reason": "task EVO_single_T_0077",
+      "before": {
+       "description": "For FuelPin/Channel heat-transfer pairs, FuelPin.Tcool must be driven by a coolant temperature output, specifically Channel.Tavg in these models; it must not be driven by Const.y mass flow, PowerSource.P, FuelPin.Tc, Channel.Tin, or Channel.Tout. Ep6 connected mdot.y to fp.Tcool and produced Tf=15306 and Tc=15022.7 with bounds:temperature failure; Ep1 and Ep4 showed Tin/Tout/self-output alternatives degrade Tc or Tf. This refines the retrieved Tcool rule by adding the observed failure signatures and non-applicable sources.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "assemble",
+         "diagnose",
+         "multistep",
+         "tune"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "Const",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "Check the units and source type of fp.Tcool. Replace any non-temperature or wrong-temperature driver with connect(<channel>.Tavg, <fuelpin>.Tcool), ensuring no duplicate driver remains, then verify physics and targets."
+      }
+     }
+    ]
+   },
+   "probe": {
+    "kind": "connection_driver",
+    "component": "FuelPin",
+    "port": "Tcool",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tavg"
+    },
+    "alternative_source": {
+     "component": "Channel",
+     "port": "Tin"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_777E6452",
+   "type": "rule",
+   "title": "PowerSource.P drives FuelPin.Q_fission only",
+   "description": "In these nuclear thermal-hydraulic plants, PowerSource.P is a fission power signal and must drive FuelPin.Q_fission, while FuelPin.Qcool drives Channel.Q_fuel. A PowerSource.P connected to Channel.Tin or a Channel.Tout connected to FuelPin.Q_fission injects power into a temperature port or temperature into a power port, producing absurd temperatures or initialization inconsistency. This does not apply to components whose input port is explicitly a power input other than FuelPin.Q_fission.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "PowerSource",
+     "FuelPin",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "Measured temperatures equal power magnitudes such as 2.4e+09, or initialization errors involving FuelPin.Tc0/Tc_s after a power/temperature routing swap.",
+   "recommended_strategy": "Audit all PowerSource.P connections and all FuelPin.Q_fission drivers. Connect each PowerSource.P to its corresponding FuelPin.Q_fission, connect FuelPin.Qcool to Channel.Q_fuel, and route Channel.Tout only to downstream temperature inputs.",
+   "action_template": [
+    "connect(<powersource>.P, <fuelpin>.Q_fission)",
+    "connect(<fuelpin>.Qcool, <channel>.Q_fuel)",
+    "connect(<upstream_channel>.Tout, <downstream_channel>.Tin)"
+   ],
+   "known_pitfalls": [
+    "Do not connect Channel.Tout to FuelPin.Q_fission.",
+    "Do not connect PowerSource.P to Channel.Tin.",
+    "If a wrong PowerSource.P connection remains after adding the correct one, the model becomes over-determined."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_R_0482"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.96
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 6,
+    "used": 6,
+    "positive_transfer": 2,
+    "negative_transfer": 4,
+    "tasks_seen": 6
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:31:39+00:00",
+   "updated_at": "2026-11-06T18:31:39+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "FuelPin",
+    "port": "Q_fission",
+    "claimed_source": {
+     "component": "PowerSource",
+     "port": "P"
+    },
+    "alternative_source": {
+     "component": "Channel",
+     "port": "Tout"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_FA865401",
+   "type": "failure",
+   "title": "Moving a fanout connection leaves an input undriven",
+   "description": "When a Const output such as mdot.y must drive multiple Channel.mdot inputs, replacing one connection with another does not preserve fanout; it leaves one channel mass-flow input undriven and produces an under-determined system. The fix is to add the missing connection while retaining the existing one. This does not apply when a single output is intended to drive exactly one input and the old connection is wrong.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Const",
+     "Channel",
+     "SteamGenerator"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "Under-determined build with 'Too few equations' after an edit that changed mdot.y from one Channel.mdot to another; verifier may report no unconnected inputs if the tool's accounting is misleading.",
+   "recommended_strategy": "Before editing, decide whether the source output should fan out. For common mdot in series plants, keep all existing mdot.y->Channel.mdot connections and add the missing one; do not use edit_file to move the only mdot connection.",
+   "action_template": [
+    "add_connect([[\"<mdot_const>.y\", \"<channel_i>.mdot\"]])",
+    "add_connect([[\"<mdot_const>.y\", \"<channel_j>.mdot\"]])"
+   ],
+   "known_pitfalls": [
+    "Repeated no-op edit_file calls with identical old/new text do not change the model.",
+    "A source output may legally fan out to multiple inputs; every input still needs exactly one driver."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_R_0482"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class structure: observed"
+    },
+    "teacher_confidence": 0.9
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 4,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 4
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:31:49+00:00",
+   "updated_at": "2026-11-06T18:31:49+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_F9CE7334",
+   "type": "failure",
+   "title": "Duplicate input drivers cause over-determination",
+   "description": "A plant can report all inputs connected and even pass conservation checks while still being structurally invalid if one input is driven twice and another intended connection is missing. Ep3 ended with two ch2.Tavg->fp2.Tcool connections and a missing ch1.Tavg->fp1.Tcool path; Ep4 created conflicting alias variables by replacing a Tavg connection with a wrong FuelPin.Tcool target. The signature is a successful build/simulation with structural_ok=false or alias/start-value conflicts after replace/add operations.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "assemble",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "Splitter",
+     "Mixer",
+     "PowerSource"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "Build fails with equation count one greater than variable count after add_connect; final model contains two connect statements ending at the same input port.",
+   "recommended_strategy": "After every replace/remove/add sequence, re-read the final equation list and count drivers per input connector. If a replace_connect leaves an input unconnected, add the intended missing driver rather than restoring the same old pair; remove any duplicate pair before submitting.",
+   "action_template": [
+    "remove_connect([\"<wrong_source>.<port>\", \"<target>.<input>\"])",
+    "replace_connect([\"<wrong_source>.<port>\", \"<target>.<input>\"], [\"<correct_source>.<port>\", \"<target>.<input>\"])"
+   ],
+   "known_pitfalls": [
+    "replace_connect with identical old and new pairs is rejected as no change.",
+    "Removing and re-adding the same wrong connection does not fix over-determination."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_R_0482",
+     "EVO_series2_A_0396",
+     "EVO_parallel3_R_0353",
+     "EVO_parallel3_A_0283"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.94
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 18,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 18
+   },
+   "status": "verified",
+   "version": 4,
+   "created_at": "2026-11-06T18:31:49+00:00",
+   "updated_at": "2026-11-06T18:45:06+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:33:08+00:00",
+      "reason": "task EVO_series2_A_0396",
+      "before": {
+       "description": "Adding a correct connection without removing the wrong one leaves an input driven twice, which can produce 'Too many equations, over-determined system' even when the tool reports all inputs connected. This occurred with duplicate FuelPin.Tcool drivers and with a wrong PowerSource.P connection left in place after adding the correct FuelPin.Q_fission driver. It does not apply when the extra connection is to a distinct, previously undriven input.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "assemble",
+         "diagnose",
+         "multistep"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "PowerSource",
+         "Sensor"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "After each add_connect, list connections by target input port. If a target has two drivers, remove the wrong one or use replace_connect on the original wrong pair. Re-run build before further edits."
+      }
+     },
+     {
+      "from_version": 2,
+      "at": "2026-11-06T18:33:53+00:00",
+      "reason": "task EVO_parallel3_R_0353",
+      "before": {
+       "description": "In repair tasks, adding or replacing connections can make the design point pass while leaving duplicate connect statements that violate the exactly-once input requirement. Episode 5 reached all target temperatures but failed verification because connect(ch1.Tout,ch2.Tin) appeared twice; Episode 6 also produced over-determination after duplicated or output-to-output Mixer connections.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "assemble",
+         "multistep"
+        ],
+        "component_types": [
+         "Channel",
+         "FuelPin",
+         "Mixer",
+         "Splitter",
+         "Const",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "After every replace/add/remove sequence, read or inspect the final equation list and count drivers for each input connector. Remove duplicate connect statements before submit; do not rely only on simulation success or target comparison."
+      }
+     },
+     {
+      "from_version": 3,
+      "at": "2026-11-06T18:45:06+00:00",
+      "reason": "task EVO_parallel3_A_0283",
+      "before": {
+       "description": "When an input connector is driven by more than one connect statement, the plant may still simulate or appear to have all inputs connected, but it violates the exactly-once requirement and can create over-determination or hidden structural failure. Episode 5 had fp.Qcool -> fp.Q_fission and fp.Qcool -> ch.Q_fuel with PowerSource.P unused; Episode 6 added multiple Mixer.T outputs to the same FuelPin.Q_fission inputs; Episode 2 showed that duplicate add attempts are rejected but a single missing valid connection can still be added.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "diagnose"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "Mixer",
+         "Splitter",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Maintain a count of drivers per input connector. For each input, require exactly one source; remove redundant drivers before adding replacements. Treat duplicate rejections as evidence to re-read the current model, not as a reason to resend the same batch."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_F750930D",
+   "type": "rule",
+   "title": "Series2 second channel inlet uses first outlet",
+   "description": "For a series chain of Channels, the first Channel.Tin is driven by the inlet Const.y, and each downstream Channel.Tin is driven by the immediately upstream Channel.Tout. This is inferred from coolant energy conservation and supported by Ep2/Ep3-style successful series wiring and by Ep6 where using tin.y for downstream inlets gave T2/T3 target misses. Self-driving a Channel.Tin from its own Tavg or Tout creates an algebraic shortcut that bypasses upstream heating.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "Const"
+    ],
+    "topology_constraints": [
+     "series"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "T1/Tf1 match but T2/Tf2 are low; ch2.Tin is driven by tin.y or another boundary temperature",
+   "recommended_strategy": "Build the coolant temperature chain explicitly: connect(<tin_const>.y, <ch1>.Tin), connect(<ch1>.Tout, <ch2>.Tin), connect(<ch2>.Tout, <ch3>.Tin), etc. Verify there is exactly one driver per Channel.Tin and no duplicate connect statements.",
+   "action_template": [
+    "connect(<tin_const>.y, <upstream_channel>.Tin)",
+    "connect(<upstream_channel>.Tout, <downstream_channel>.Tin)",
+    "connect(<mdot_const>.y, <upstream_channel>.mdot)",
+    "connect(<mdot_const>.y, <downstream_channel>.mdot)"
+   ],
+   "known_pitfalls": [
+    "Do not use Channel.Tin as a source; it is an input.",
+    "Do not drive ch2.Tin from tin.y in a series design unless the task explicitly requires parallel channels.",
+    "Do not leave ch1.Tin unconnected while replacing ch2.Tin; every input must be driven exactly once."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_A_0396",
+     "EVO_series3_R_0068"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.95
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 16,
+    "used": 16,
+    "positive_transfer": 7,
+    "negative_transfer": 9,
+    "tasks_seen": 16
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:33:00+00:00",
+   "updated_at": "2026-11-06T18:43:43+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:43:43+00:00",
+      "reason": "task EVO_series3_R_0068",
+      "before": {
+       "description": "In two-Channel/FuelPin series2 plants, the downstream Channel.Tin must be driven by the upstream Channel.Tout, not by the inlet Const.y. This is inferred from the port table and energy conservation: the second channel receives coolant already heated by the first channel. Episode 1 showed tin.y->ch2.Tin gives T2 too low, while Episode 3's ch1.Tout->ch2.Tin met all targets with conservation checks passing.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "diagnose",
+         "multistep"
+        ],
+        "component_types": [
+         "Channel",
+         "FuelPin",
+         "Const",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "single-pass coolant heating"
+        ]
+       },
+       "recommended_strategy": "For series2 topology, wire the coolant path as tin.y->ch1.Tin and ch1.Tout->ch2.Tin; keep mdot.y driving both Channel.mdot inputs. Then verify T2 and Tf2 with compare_to_targets and check_physics."
+      }
+     }
+    ]
+   },
+   "probe": {
+    "kind": "connection_driver",
+    "component": "Channel",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "Const",
+     "port": "y"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_914719A7",
+   "type": "failure",
+   "title": "Use port-qualified names and valid directions",
+   "description": "In series and loop plants, a Const flow output such as mdot.y must drive every Channel.mdot and SteamGenerator.mdot input that belongs to the same flow path. Ep3 and Ep5 succeeded when the missing mdot input was added; Ep1 failed partly because it tried to source sg.mdot from Channel.mdot, which is an input. Outputs may fan out, but input ports cannot be used as sources.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "multistep"
+    ],
+    "component_types": [
+     "Const",
+     "Channel",
+     "SteamGenerator"
+    ],
+    "topology_constraints": [
+     "series",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "add_connect reports 'instance, not a port', 'has no port', 'both are outputs', or 'connection must go output -> input'",
+   "recommended_strategy": "Enumerate all mdot inputs and connect the same Const.y output to each one; never connect Channel.mdot to another mdot input.",
+   "action_template": [
+    "inspect()",
+    "add_connect([[\"<source_instance>.<output_port>\", \"<target_instance>.<input_port>\"]])"
+   ],
+   "known_pitfalls": [
+    "Do not write connect(<input>, <output>) even if the physical relation is bidirectional; the tool expects output first.",
+    "Do not use bare instance names such as tin or mdot as connectors.",
+    "Do not invent aggregate ports like Mixer.Tin; use the declared input ports."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_A_0396",
+     "EVO_parallel3_R_0353",
+     "EVO_loop_A_0204"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.98
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 11,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 11
+   },
+   "status": "verified",
+   "version": 4,
+   "created_at": "2026-11-06T18:33:08+00:00",
+   "updated_at": "2026-11-06T18:34:50+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:33:53+00:00",
+      "reason": "task EVO_parallel3_R_0353",
+      "before": {
+       "description": "Tool calls fail when instance names are used as ports, when input-to-output order is reversed, or when a nonexistent port such as Mixer.Tin is referenced. Episode 1 failed with 'tin'/'mdot' as instances instead of tin.y/mdot.y; Episode 3 added ch2.mdot->mdot.y but the final model showed mdot.y->ch2.mdot; Episode 6 repeatedly rejected Mixer.Tin and output-to-output connections to Mixer.T.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "tune",
+         "diagnose",
+         "multistep"
+        ],
+        "component_types": [
+         "Const",
+         "Channel",
+         "FuelPin",
+         "Mixer",
+         "Splitter",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Before adding connections, build a source->target list from the port table using exact <instance>.<port> names and output->input direction only. For Const outputs use <const>.y; for Mixer inputs use T1,m1,T2,m2; for Mixer outputs use T,m; for Splitter inputs use T,m and outputs T1,m1,T2,m2."
+      }
+     },
+     {
+      "from_version": 2,
+      "at": "2026-11-06T18:33:53+00:00",
+      "reason": "task EVO_parallel3_R_0353",
+      "before": {
+       "description": "In series, parallel, and loop plants with FuelPin and Channel pairs, the FuelPin.Tcool input must be driven by the paired Channel.Tavg output, not by Channel.Tin, Channel.Tout, SteamGenerator.Tout, or a FuelPin output. This is inferred from the port table and supported by Episode 2, where adding ch2.Tavg -> fp2.Tcool made the under-determined model build, conserve, and meet all targets; Episode 3 showed that using sg.Tout for fp.Tcool left fuel/clad temperatures off target while hydraulic temperatures were correct.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "diagnose",
+         "multistep"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "SteamGenerator"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "For each FuelPin/Channel heat-transfer pair, verify the closed feedback loop: PowerSource.P -> FuelPin.Q_fission, FuelPin.Qcool -> Channel.Q_fuel, and Channel.Tavg -> FuelPin.Tcool. Do not substitute loop cold-leg temperature or fuel temperatures for Tcool."
+      }
+     },
+     {
+      "from_version": 3,
+      "at": "2026-11-06T18:34:50+00:00",
+      "reason": "task EVO_loop_A_0204",
+      "before": {
+       "description": "In assembly and repair tasks, attempts such as FuelPin.Tcool -> Channel.Tin, FuelPin.Q_fission -> Channel.Q_fuel, Channel.mdot -> Splitter.m, or Mixer.T -> Splitter.T are structural/tool-format errors because both endpoints are inputs or the source is not an output. Episodes 4 and 6 repeatedly produced 'both are inputs' or nonexistent-port rejections, and final models with such connections failed to build.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "Splitter",
+         "Mixer",
+         "SteamGenerator"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Before adding connections, build a source-output to target-input map from the port table. Only use declared outputs as the first argument of connect(...), and only use declared inputs as the second argument; re-read the model after partial batches to avoid retrying already-added connections."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_3EED8434",
+   "type": "skill",
+   "title": "Assemble series2 from conservation topology",
+   "description": "For FuelPin/Channel pairs in loop, series, and parallel assemblies, FuelPin.Tcool must be driven by the paired Channel.Tavg output. Channel.Tin is an input port, not an output, and using it as a source creates an input-to-input connection or leaves FuelPin.Tcool undriven. The successful loop and parallel episodes both used Channel.Tavg -> FuelPin.Tcool and passed conservation and design-point checks.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Incomplete series2 model with 10 input connectors and design targets for Tin, mdot, T1, Tf1, T2, Tf2",
+   "recommended_strategy": "Before editing, classify each port from the table as input or output. For every FuelPin.Tcool input, select the corresponding Channel.Tavg output; never use Channel.Tin as a source. After replacement, verify that all inputs are connected and rerun physics.",
+   "action_template": [
+    "connect(<ps1>.P, <fp1>.Q_fission)",
+    "connect(<ps2>.P, <fp2>.Q_fission)",
+    "connect(<fp1>.Qcool, <ch1>.Q_fuel)",
+    "connect(<fp2>.Qcool, <ch2>.Q_fuel)",
+    "connect(<ch1>.Tavg, <fp1>.Tcool)",
+    "connect(<ch2>.Tavg, <fp2>.Tcool)",
+    "connect(<tin>.y, <ch1>.Tin)",
+    "connect(<ch1>.Tout, <ch2>.Tin)",
+    "connect(<mdot>.y, <ch1>.mdot)",
+    "connect(<mdot>.y, <ch2>.mdot)"
+   ],
+   "known_pitfalls": [
+    "Do not fan tin.y into both Channel.Tin inputs for a series2 design; that creates parallel thermal inlets and misses T2/Tf2.",
+    "Do not use ch1.Tavg or ch2.Tavg as the downstream inlet temperature; Tavg is for FuelPin.Tcool feedback.",
+    "Do not submit after only compare_to_targets; verify no duplicate or missing input drivers."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_A_0396",
+     "EVO_sensor_loop_R_0335",
+     "EVO_sensor_loop_M_0559"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class structure: observed"
+    },
+    "teacher_confidence": 0.96
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 20,
+    "used": 20,
+    "positive_transfer": 11,
+    "negative_transfer": 9,
+    "tasks_seen": 20
+   },
+   "status": "verified",
+   "version": 3,
+   "created_at": "2026-11-06T18:33:08+00:00",
+   "updated_at": "2026-11-06T18:46:58+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:40:20+00:00",
+      "reason": "task EVO_sensor_loop_R_0335",
+      "before": {
+       "description": "For series2 assembly tasks with two FuelPin/Channel pairs, first wire each local heat-transfer loop, then wire the coolant series path, then verify. Episode 3 demonstrates the working procedure: PowerSource.P->FuelPin.Q_fission, FuelPin.Qcool->Channel.Q_fuel, Channel.Tavg->FuelPin.Tcool, tin.y->ch1.Tin, ch1.Tout->ch2.Tin, and mdot.y->both Channel.mdot inputs; check_physics and compare_to_targets both passed.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "multistep"
+        ],
+        "component_types": [
+         "Const",
+         "PowerSource",
+         "FuelPin",
+         "Channel"
+        ],
+        "topology_constraints": [
+         "series"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "single-pass coolant heating"
+        ]
+       },
+       "recommended_strategy": "Add connections in this order: fission power drivers, fuel-to-channel heat drivers, channel-average-temperature feedback to fuel pins, inlet temperature to upstream channel, upstream outlet to downstream inlet, and mass flow to both channels. Then run check_physics before compare_to_targets and submit only after structural inspection."
+      }
+     },
+     {
+      "from_version": 2,
+      "at": "2026-11-06T18:46:58+00:00",
+      "reason": "task EVO_sensor_loop_M_0559",
+      "before": {
+       "description": "In loop and parallel FuelPin/Channel assemblies, a FuelPin.Tcool input must be driven by the paired Channel.Tavg output, not Channel.Tin and not a Splitter input. This is inferred from the port table and confirmed by Ep1, where adding ch.Tavg->fp.Tcool made the under-determined loop build, pass conservation, and meet all targets; Ep4's use of ch.Tavg->sg.Tin instead left ch.Tin unconnected and missed hot/fuel temperatures.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "multistep",
+         "diagnose"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "SteamGenerator",
+         "Sensor"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "For each FuelPin/Channel pair, connect the Channel.Tavg output to that FuelPin.Tcool input; keep Channel.Tin as a coolant inlet driven by an upstream temperature output such as SteamGenerator.Tout, Sensor.y, or Splitter.T1/T2."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_ADEEEFCF",
+   "type": "failure",
+   "title": "Input-to-input connects are structural errors",
+   "description": "Splitter.T and Splitter.m are inputs; Splitter.T1/T2 and m1/m2 are outputs. Mixer.T1/m1/T2/m2 are inputs; Mixer.T and m are outputs. In parallel plants, temperature and mass streams must be routed by matching physical quantities: Splitter.T1/T2 to Channel.Tin or Mixer.T inputs, Splitter.m1/m2 to Channel.mdot or Mixer.m inputs, and Mixer.m is an output that should not drive Mixer.m2. Ep1 and Ep5 show that using temperature outputs for mass inputs or self-driving Mixer.m -> Mixer.m2 creates structural or nonlinear solve failures.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "Splitter",
+     "Mixer",
+     "Channel",
+     "Const"
+    ],
+    "topology_constraints": [
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow",
+     "branching flow"
+    ]
+   },
+   "problem_signature": "Tool reports 'both are inputs; a connection must go output -> input' or 'no valid connections added' for a pair of input ports.",
+   "recommended_strategy": "Before adding connections, classify each port as temperature or mass and as input or output. Drive Splitter.T from the inlet temperature source and Splitter.m from the inlet mass-flow source; route Splitter.T1/T2 and m1/m2 to corresponding downstream temperature and mass inputs; drive Mixer.m1/m2 from branch mass outputs, not from Mixer.m.",
+   "action_template": [
+    "inspect_port_table()",
+    "connect(<source_output>, <target_input>)"
+   ],
+   "known_pitfalls": [
+    "Repeating the same rejected pair after read_file.",
+    "Confusing a component input variable with a physical output because the name sounds like a state."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_loop_A_0204",
+     "EVO_parallel3_A_0283"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class structure: observed"
+    },
+    "teacher_confidence": 0.99
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 8,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 8
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:34:50+00:00",
+   "updated_at": "2026-11-06T18:45:05+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:45:05+00:00",
+      "reason": "task EVO_parallel3_A_0283",
+      "before": {
+       "description": "In assembly tasks, attempts such as connect(fp.Tcool, ch.Tin), connect(ch.mdot, sg.mdot), or connect(fp.Tcool, sg.Tin) are rejected because both endpoints are inputs. Ep1 repeatedly retried this class of error and never completed the plant. The fix is to consult the port table and choose an output of the correct physical quantity, not merely a similarly named port.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "multistep"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "SteamGenerator",
+         "Splitter",
+         "Mixer"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "Before adding a connection, classify both endpoints from the port table; if the source is listed under inputs, replace it with an output port carrying the needed quantity."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_5A0A915F",
+   "type": "success",
+   "title": "Add missing driver, then verify physics and targets",
+   "description": "In a parallel2 plant with Splitter and Mixer, an under-determined build can be caused by an undriven Splitter.m input even when branch temperatures and branch flows are connected. Ep3 added Const.mdot.y -> Splitter.m, after which all conservation checks passed and every design target matched. This is a structural missing-driver repair, not a parameter tuning issue.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "assemble",
+     "diagnose"
+    ],
+    "component_types": [
+     "Splitter",
+     "Mixer",
+     "Const",
+     "Channel",
+     "FuelPin"
+    ],
+    "topology_constraints": [
+     "parallel"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "Build failed with 'Too few equations' and one unconnected input is implied by the model text or tool report.",
+   "recommended_strategy": "When a parallel plant is under-determined, check the Splitter's total mass-flow input before changing parameters. Add the Const flow output to Splitter.m, then run check_physics and compare_to_targets.",
+   "action_template": [
+    "read_file(TaskModel.mo)",
+    "check_physics(stop_time=1200)",
+    "add_connect([<source_output>, <undriven_input>])",
+    "check_physics(stop_time=1200)",
+    "compare_to_targets(stop_time=1200)",
+    "submit()"
+   ],
+   "known_pitfalls": [
+    "Submitting after build success without checking design-point targets.",
+    "Adding a driver to an already driven input, causing duplicate-driver over-determination."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_loop_A_0204",
+     "EVO_sensor_loop_M_0559"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class structure: observed"
+    },
+    "teacher_confidence": 0.9
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 27,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 27
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:34:50+00:00",
+   "updated_at": "2026-11-06T18:46:58+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:46:58+00:00",
+      "reason": "task EVO_sensor_loop_M_0559",
+      "before": {
+       "description": "For repair tasks with an under-determined build, adding exactly one missing input driver and then running check_physics and compare_to_targets worked in Ep3, Ep4, and Ep5. The successful additions were port-correct: mdot.y to a missing Channel/SteamGenerator.mdot, tin.y to a missing Channel.Tin, or ps.P to FuelPin.Q_fission. This procedure distinguishes structural completion from goal satisfaction.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "multistep"
+        ],
+        "component_types": [
+         "Const",
+         "PowerSource",
+         "FuelPin",
+         "Channel",
+         "SteamGenerator",
+         "Splitter",
+         "Mixer"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "Identify the single undriven input, add a connection from the appropriate output, then run check_physics and compare_to_targets before submitting."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_60A3FDB4",
+   "type": "failure",
+   "title": "Physics pass does not imply design point",
+   "description": "In these FuelPin-Channel assemblies, the FuelPin.Tcool input must be driven by the paired Channel.Tavg output, not Channel.Tin, Const tin.y, or another input. Channel.Tavg represents the coolant temperature used for fuel-to-coolant heat transfer; using inlet temperature changes Qcool and fuel temperatures while the model may still be steady and energy-balanced. This rule applies to single and series plants where each FuelPin is thermally coupled to its own Channel.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "Const"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "fuel-to-coolant heat transfer"
+    ]
+   },
+   "problem_signature": "check_physics reports steady=True and all conservation checks PASS, but compare_to_targets shows Tmix/T3/Tf3 or other temperatures far off.",
+   "recommended_strategy": "For each FuelPin, verify connect(<paired_channel>.Tavg, <fuelpin>.Tcool). If Tcool is driven by a boundary Const or Channel.Tin, replace it with the paired Channel.Tavg output. Do not connect Channel.Tin to FuelPin.Tcool because both are inputs.",
+   "action_template": [
+    "check_physics(stop_time=1200)",
+    "compare_to_targets(stop_time=1200)",
+    "if targets_off: inspect_temperature_routing()"
+   ],
+   "known_pitfalls": [
+    "Treating 'all inputs connected' or 'physics_ok' as equivalent to goal_ok.",
+    "Making arbitrary routing swaps that preserve conservation but change the thermal path away from the design point."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_loop_A_0204",
+     "EVO_loop_T_0435",
+     "EVO_series2_R_0158"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class structure: observed"
+    },
+    "teacher_confidence": 0.92
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 12,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 12
+   },
+   "status": "verified",
+   "version": 3,
+   "created_at": "2026-11-06T18:34:50+00:00",
+   "updated_at": "2026-11-06T18:37:47+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:35:48+00:00",
+      "reason": "task EVO_loop_T_0435",
+      "before": {
+       "description": "In Ep2 and Ep6, routing changes produced steady models with all component conservation checks passing, but compare_to_targets still showed large temperature errors and the verifier reported goal_ok=false. A structurally valid and conservative plant can still have wrong thermal routing or boundary connections. Do not stop after check_physics passes; always compare measured design variables.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "multistep",
+         "tune",
+         "diagnose"
+        ],
+        "component_types": [
+         "Channel",
+         "FuelPin",
+         "Splitter",
+         "Mixer",
+         "SteamGenerator"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "After any routing repair, run compare_to_targets; if off-design temperatures remain, revisit upstream temperature routing and boundary sources rather than assuming conservation validates topology."
+      }
+     },
+     {
+      "from_version": 2,
+      "at": "2026-11-06T18:37:47+00:00",
+      "reason": "task EVO_series2_R_0158",
+      "before": {
+       "description": "When a wrong or missing connection is present, changing component parameters cannot repair the structural or physical inconsistency. Ep1 changed Tcool routing while Tf remained about 2974 K; Ep6 set G_gap and G_cl to their existing values while mdot.y still drove fp.Tcool and temperatures remained absurd; Ep5 changed parameters but failed because the power tuning was not converged. The signature is repeated set_parameter calls with unchanged compare_to_targets errors or persistent bounds:temperature failures.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "tune",
+         "multistep",
+         "diagnose"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "PowerSource",
+         "SteamGenerator",
+         "Const"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "First verify structural correctness: every input driven exactly once, no duplicate drivers, and each port driven by the correct component type. Only then tune parameters against compare_to_targets."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_1991EB00",
+   "type": "rule",
+   "title": "PowerSource drives FuelPin.Q_fission",
+   "description": "In single, loop, and parallel FuelPin/Channel plants, FuelPin.Q_fission must be driven by PowerSource.P, not by FuelPin.Qcool or another heat-flow output. Ep3 showed that replacing fp.Qcool->fp.Q_fission with ps.P->fp.Q_fission restored Qfuel and all temperatures while conservation passed; the initial self-driven pin produced Qfuel=2.371e9 instead of the target 3.4e9. By conservation inference, Qcool is the heat delivered to the Channel, while Q_fission is the imposed heat source boundary.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "assemble",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "PowerSource",
+     "FuelPin",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Qfuel and all fuel/coolant temperatures are low or inconsistent while component energy checks pass; FuelPin.Q_fission is connected to FuelPin.Qcool or another non-PowerSource output.",
+   "recommended_strategy": "Inspect the Q_fission driver first. If it is not PowerSource.P, replace that connection with connect(<powersource>.P, <fuelpin>.Q_fission), then run check_physics and compare_to_targets.",
+   "action_template": [
+    "replace_connect(old=[<fuelpin>.Qcool, <fuelpin>.Q_fission], new=[<powersource>.P, <fuelpin>.Q_fission])",
+    "check_physics(stop_time=<T>)",
+    "compare_to_targets(stop_time=<T>)"
+   ],
+   "known_pitfalls": [
+    "Do not add a second Q_fission driver; every input connector must be driven exactly once.",
+    "Do not tune G_gap or G_cl to compensate for a missing or wrong fission-power boundary."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_loop_T_0435"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.98
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 2,
+    "used": 2,
+    "positive_transfer": 0,
+    "negative_transfer": 2,
+    "tasks_seen": 2
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:35:42+00:00",
+   "updated_at": "2026-11-06T18:35:42+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "FuelPin",
+    "port": "Q_fission",
+    "claimed_source": {
+     "component": "PowerSource",
+     "port": "P"
+    },
+    "alternative_source": {
+     "component": "FuelPin",
+     "port": "Qcool"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_4188E52F",
+   "type": "failure",
+   "title": "Adding drivers without removing old ones overdetermines",
+   "description": "In repair tasks with an existing wrong connection, add_connect is unsafe unless the old driver is removed first. Ep2 and Ep4 produced 'Too many equations, over-determined system' after adding extra connections to inputs that were already driven; Ep4 ended with both ch.Tout and ch.Tavg driving fp.Tcool. The signature is build failure with equation count exceeding variable count even though inspect reports all inputs connected.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "multistep",
+     "assemble"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "Splitter",
+     "Mixer",
+     "SteamGenerator",
+     "Const"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "BUILD FAILED: Too many equations, over-determined system; duplicate or multiple connections to the same input port; 'All inputs connected' is not sufficient evidence of structural correctness.",
+   "recommended_strategy": "Use replace_connect for a wrong existing driver, or remove_connect followed by exactly one add_connect. After each edit, inspect the connection list and run check_physics before making another routing change.",
+   "action_template": [
+    "inspect()",
+    "replace_connect(old=[<wrong_source>.<port>, <target>.<input>], new=[<correct_source>.<port>, <target>.<input>])",
+    "check_physics(stop_time=<T>)"
+   ],
+   "known_pitfalls": [
+    "Do not use add_connect to 'try' an alternative source while the original source remains connected.",
+    "Do not interpret 'All inputs connected' as 'exactly once'; duplicate drivers can still be present."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_loop_T_0435"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class structure: observed"
+    },
+    "teacher_confidence": 0.97
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:35:42+00:00",
+   "updated_at": "2026-11-06T18:35:42+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_7844F7F6",
+   "type": "failure",
+   "title": "Input-to-input connects are structural errors",
+   "description": "When assembling or repairing plants, attempts such as connect(Splitter.T, Mixer.T1), connect(FuelPin.Tcool, Channel.Tin), or connect(FuelPin.Tcool, Mixer.T1) fail because both named ports are inputs. These are tool/format and structural errors, not physics or tuning errors; the simulator rejects them or leaves inputs unconnected. Ep4 and Ep5 repeatedly produced this signature and then compounded it with duplicate or invalid replace_connect calls.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair"
+    ],
+    "component_types": [
+     "Splitter",
+     "Mixer",
+     "FuelPin",
+     "Channel",
+     "SteamGenerator"
+    ],
+    "topology_constraints": [
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "Tool reports 'both are inputs; a connection must go output -> input' or 'Unconnected inputs' after a replace/add attempt.",
+   "recommended_strategy": "Before every add_connect or replace_connect, classify both ports from the port table; only use an output on the left and an input on the right. For Splitter/Mixer flow paths, use Splitter.T1/T2/m1/m2 or Channel.Tout as outputs, and Mixer.T1/T2/m1/m2 as inputs.",
+   "action_template": [
+    "inspect(port_direction=true)",
+    "connect(<splitter>.T1, <channel>.Tin)",
+    "connect(<splitter>.m1, <channel>.mdot)",
+    "connect(<channel>.Tout, <mixer>.T1)",
+    "connect(<splitter>.m1, <mixer>.m1)"
+   ],
+   "known_pitfalls": [
+    "Do not try to remove or replace a rejected connection; rejected connections were never added.",
+    "Do not use an input port as a source just because it appears in an unconnected-inputs list."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_single_T_0077"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.98
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 2,
+    "used": 2,
+    "positive_transfer": 0,
+    "negative_transfer": 2,
+    "tasks_seen": 2
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:36:38+00:00",
+   "updated_at": "2026-11-06T18:36:38+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_E72EC116",
+   "type": "failure",
+   "title": "No-op edits do not repair routing",
+   "description": "In assembly/repair tasks, repeated add_connect calls for already connected pairs, replace_connect with identical old/new pairs, and set_parameter to the current value consume steps without changing the model. Episodes 2, 4, 5, and 6 show these no-ops followed by the same build failures or unchanged target comparisons. The signature is tool feedback saying duplicate, identical, or unchanged simulation metrics after an edit.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "tune",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "SteamGenerator",
+     "Splitter",
+     "Mixer",
+     "Const",
+     "Sensor"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Tool reports 'old and new are identical', 'duplicate', or 'no valid connections added'; subsequent compare_to_targets/check_physics values are unchanged.",
+   "recommended_strategy": "After each tool rejection or no-op, read the current model or inspect connections, then propose only a different port-level action that changes an unconnected input, replaces a wrong source, or changes a parameter in a direction justified by the measured error.",
+   "action_template": [
+    "read_file(path=TaskModel.mo)",
+    "compare_to_targets(stop_time=<T>)",
+    "set_parameter(instance=<component>, parameter=<param>, value=<new_value_not_equal_to_current>)",
+    "compare_to_targets(stop_time=<T>)"
+   ],
+   "known_pitfalls": [
+    "A diagnosis label such as wrong_routing does not itself change the model.",
+    "Repeated inspect calls with the same port do not reveal new information."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_single_T_0077",
+     "EVO_loop_T_0379"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.9
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 11,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 11
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:36:39+00:00",
+   "updated_at": "2026-11-06T18:46:07+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:46:07+00:00",
+      "reason": "task EVO_loop_T_0379",
+      "before": {
+       "description": "In repair/tune tasks, repeated replace_connect calls with identical old/new pairs, duplicate add_connect calls, and setting parameters to their existing values consume steps without changing the model. Ep3, Ep5, and Ep6 show this pattern: target comparisons and physics checks remain unchanged after no-op edits, and the final model can still fail structurally or at the design point. This is a tool/format error class, distinct from wrong routing, wrong parameter, or physical imbalance.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "tune",
+         "diagnose"
+        ],
+        "component_types": [
+         "PowerSource",
+         "FuelPin",
+         "Channel",
+         "SteamGenerator",
+         "Const"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "After any rejected or no-op edit, re-read the current model and enumerate candidate faults from target residuals; only issue an edit whose old and new pairs differ and whose source is an output. For tuning, change only parameters that are actually off specification and verify with compare_to_targets after each real change."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_71C80378",
+   "type": "rule",
+   "title": "Loop cold leg comes from SteamGenerator.Tout",
+   "description": "In a Channel/SteamGenerator recirculating loop, Channel.Tin should be driven by SteamGenerator.Tout, while SteamGenerator.Tin should be driven by Channel.Tout; FuelPin.Tcool should still be driven by Channel.Tavg. Ep3's initial model had sg.Tout -> ch.Tin but used ch.Tavg -> sg.Tin, producing Qsg about half of Qfuel and low hot/cold temperatures; Ep5's bad edits replaced sg.Tout -> fp.Tcool with input-to-input connects and caused nonsteady, nonconserving temperatures. This routing rule is inferred from the port table and loop energy-flow direction, and is consistent with the observed failures.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "SteamGenerator",
+     "FuelPin",
+     "Sensor"
+    ],
+    "topology_constraints": [
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Loop plant has Qfuel on target but Qsg low, Thot/Tcold low, or nonsteady temperature runaway; Channel.Tin or SteamGenerator.Tin is driven by Tavg/Tcool instead of the loop outlet temperatures.",
+   "recommended_strategy": "Wire the thermal loop as Channel.Tout -> SteamGenerator.Tin and SteamGenerator.Tout -> Channel.Tin; wire Channel.Tavg -> FuelPin.Tcool; wire Channel.Tout -> Sensor.y_in if a hot-leg sensor is present. Then check Qsg versus Qfuel and hot/cold temperatures.",
+   "action_template": [
+    "connect(<channel>.Tout, <steamgenerator>.Tin)",
+    "connect(<steamgenerator>.Tout, <channel>.Tin)",
+    "connect(<channel>.Tavg, <fuelpin>.Tcool)",
+    "connect(<channel>.Tout, <sensor>.y_in)"
+   ],
+   "known_pitfalls": [
+    "Channel.Tavg is a fuel-pin coolant temperature, not the steam-generator inlet temperature.",
+    "FuelPin.Tcool is an input and cannot drive Channel.Tin."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_single_T_0077"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.88
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:36:44+00:00",
+   "updated_at": "2026-11-06T18:36:44+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "SteamGenerator",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "Channel",
+     "port": "Tavg"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_2607B321",
+   "type": "rule",
+   "title": "Series channels use Tout, not FuelPin Tc",
+   "description": "In series Channel-Channel thermal-hydraulic plants, the downstream Channel.Tin input must be driven by the upstream Channel.Tout output. A FuelPin.Tc output is a clad temperature, not the bulk coolant outlet enthalpy/temperature state; using it can still conserve component energy but shifts downstream T2/Tf2 off target. This applies when channels are in series with common mass flow and each FuelPin exchanges heat with its paired Channel.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "FuelPin",
+     "PowerSource",
+     "Const"
+    ],
+    "topology_constraints": [
+     "series"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "single-pass coolant flow"
+    ]
+   },
+   "problem_signature": "Upstream targets OK; downstream T2/Tf2 biased high or low while all component conservation checks pass; ch2.Tin driven by fp1.Tc or another FuelPin temperature.",
+   "recommended_strategy": "Inspect the downstream Channel.Tin driver. If it is not the upstream Channel.Tout, replace that connection with connect(<upstream_channel>.Tout, <downstream_channel>.Tin), then rerun physics and target comparison.",
+   "action_template": [
+    "replace_connect(old=[<fuelpin>.Tc, <downstream_channel>.Tin], new=[<upstream_channel>.Tout, <downstream_channel>.Tin])",
+    "check_physics(stop_time=<time>)",
+    "compare_to_targets(stop_time=<time>)"
+   ],
+   "known_pitfalls": [
+    "Do not treat a passing conservation check as proof of correct routing; wrong temperature routing can be steady and energy-balanced but miss the design point.",
+    "Do not connect Channel.Tin to FuelPin.Tcool because both are inputs."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_R_0158"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.98
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 2,
+    "used": 1,
+    "positive_transfer": 0,
+    "negative_transfer": 1,
+    "tasks_seen": 2
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:37:35+00:00",
+   "updated_at": "2026-11-06T18:37:35+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "Channel",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "FuelPin",
+     "port": "Tc"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_9CE2D4DA",
+   "type": "rule",
+   "title": "FuelPin Q_fission needs PowerSource, not Qcool",
+   "description": "For a FuelPin coupled to a Channel, Q_fission is an external heat-generation input and should be driven by a PowerSource.P output; Qcool is the FuelPin heat-removal output that drives Channel.Q_fuel. Connecting Qcool back to Q_fission creates an algebraic self-feedback that can be steady and energy-balanced but produces the wrong Qfuel and fuel temperatures. Adding PowerSource.P while retaining the Qcool self-loop double-drives Q_fission and over-determines the model.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "FuelPin",
+     "PowerSource",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "fission-heated fuel pin"
+    ]
+   },
+   "problem_signature": "Qfuel and Tf/Tc off target while Tin/mdot are OK; fp.Q_fission connected from fp.Qcool; or build fails with too many equations after adding ps.P without removing the self-loop.",
+   "recommended_strategy": "Ensure exactly one driver for each FuelPin.Q_fission: connect(<powersource>.P, <fuelpin>.Q_fission). Remove any connect(<fuelpin>.Qcool, <fuelpin>.Q_fission) before adding the PowerSource driver. Keep connect(<fuelpin>.Qcool, <channel>.Q_fuel) for heat removal.",
+   "action_template": [
+    "remove_connect(pair=[<fuelpin>.Qcool, <fuelpin>.Q_fission])",
+    "add_connect(pairs=[[<powersource>.P, <fuelpin>.Q_fission]])",
+    "check_physics(stop_time=<time>)",
+    "compare_to_targets(stop_time=<time>)"
+   ],
+   "known_pitfalls": [
+    "Do not add a second Q_fission driver; every input connector must be driven exactly once.",
+    "Do not diagnose this as a parameter error solely from physics PASS; compare Qfuel and fuel temperatures to the design point."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_R_0158"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.97
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 1,
+    "used": 1,
+    "positive_transfer": 0,
+    "negative_transfer": 1,
+    "tasks_seen": 1
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:37:41+00:00",
+   "updated_at": "2026-11-06T18:37:41+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "FuelPin",
+    "port": "Q_fission",
+    "claimed_source": {
+     "component": "PowerSource",
+     "port": "P"
+    },
+    "alternative_source": {
+     "component": "FuelPin",
+     "port": "Qcool"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_CC87B630",
+   "type": "failure",
+   "title": "Adding drivers without removing wrong ones",
+   "description": "In repair and assembly tasks, adding a correct connection while leaving an existing wrong or duplicate connection attached creates an input with more than one driver. Ep6 ended with duplicate ch1.Tout->ch2.Tin and failed structural_ok despite goal_ok; Ep3 and Ep5 also show duplicate add attempts being rejected. The signature is an over-determined build error or a verifier structural failure with no unconnected inputs.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "Channel",
+     "FuelPin",
+     "SteamGenerator",
+     "Const",
+     "PowerSource"
+    ],
+    "topology_constraints": [
+     "series",
+     "loop",
+     "parallel"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "After add_connect, check_physics reports 'Too many equations, over-determined system'; inspect shows an input still has its original wrong source plus a new source.",
+   "recommended_strategy": "Before adding a replacement driver, inspect the current connection list and remove the exact old pair driving that input. After edits, verify that every input has exactly one driver and that no connect statement appears twice; do not rely only on simulation success or target comparison.",
+   "action_template": [
+    "inspect(path=TaskModel.mo)",
+    "remove_connect(pair=[<wrong_output>, <target_input>])",
+    "add_connect(pairs=[[<correct_output>, <target_input>]])",
+    "check_physics(stop_time=<time>)"
+   ],
+   "known_pitfalls": [
+    "replace_connect with an input as the new source can leave the target unconnected because input->input connections are invalid.",
+    "A tool reporting 'All inputs connected' does not rule out duplicate drivers; build equation count can still fail."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_R_0158",
+     "EVO_series3_R_0068"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.94
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 3,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 3
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:37:47+00:00",
+   "updated_at": "2026-11-06T18:43:49+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:43:49+00:00",
+      "reason": "task EVO_series3_R_0068",
+      "before": {
+       "description": "In repair tasks, adding a correct-looking driver while leaving the original wrong driver attached creates duplicate input drivers and an over-determined build. Episode 3 added ps.P to fp.Q_fission while fp.Qcool->fp.Q_fission remained, then also replaced Tavg feedback with invalid/constant routing; the final model had build_ok=false. The fix is to replace or remove the wrong connection first, preserving exactly one driver per input.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "diagnose"
+        ],
+        "component_types": [
+         "FuelPin",
+         "PowerSource",
+         "Channel",
+         "Const"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Before adding a replacement driver, use replace_connect when the target input already has a connection, or remove_connect the wrong pair first. Then verify 'All inputs connected' and that no input appears as a target in two connect statements."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_708227DD",
+   "type": "rule",
+   "title": "Loop hot leg drives steam generator inlet",
+   "description": "In a recirculating loop with Channel, Sensor, and SteamGenerator, the Channel.Tout output should drive Sensor.y_in, Sensor.y should drive SteamGenerator.Tin, and SteamGenerator.Tout should drive Channel.Tin. Ep1's final model with this chain plus ch.Tavg->fp.Tcool passed physics and all design targets; Ep4 instead connected ch.Tavg->sg.Tin and left ch.Tin unconnected, producing structural failure and off-target Thot/Tf/Tc.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "Sensor",
+     "SteamGenerator"
+    ],
+    "topology_constraints": [
+     "loop",
+     "series"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Loop compiles only after all inputs are driven, but Thot/Tf/Tc are high while Tcold and Qsg are OK; or ch.Tin remains unconnected.",
+   "recommended_strategy": "Trace the coolant temperature loop from Channel.Tout through the sensor to SteamGenerator.Tin, then from SteamGenerator.Tout back to Channel.Tin; verify every connector is output->input and exactly one driver per input.",
+   "action_template": [
+    "connect(<channel>.Tout, <sensor>.y_in)",
+    "connect(<sensor>.y, <steamgenerator>.Tin)",
+    "connect(<steamgenerator>.Tout, <channel>.Tin)"
+   ],
+   "known_pitfalls": [
+    "Do not connect Channel.Tin -> SteamGenerator.Tin; both are inputs.",
+    "Do not connect Channel.Tavg -> SteamGenerator.Tin in place of the hot-leg sensor path unless the task explicitly defines that topology.",
+    "Do not use SteamGenerator.Qsg as a heat input to Channel.Q_fuel; Qsg is an output and Channel.Q_fuel should be driven by FuelPin.Qcool in normal loop topology."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_R_0335"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.88
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:40:26+00:00",
+   "updated_at": "2026-11-06T18:40:26+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "SteamGenerator",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Sensor",
+     "port": "y"
+    },
+    "alternative_source": {
+     "component": "Channel",
+     "port": "Tavg"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_07185C20",
+   "type": "failure",
+   "title": "Tuning wrong branch parameter without sensitivity",
+   "description": "In parallel2 tuning tasks, when only one branch fuel temperature is off while Tmix, Tin, mdot, branch outlet temperatures, and the other branch fuel temperature are already OK, changing FuelPin G_gap/G_cl on the bad branch may not move the reported target if the measured fuel temperature is routed from the wrong branch or the parameter is not the active fault. Ep2 and Ep3 repeatedly changed fp2 G_cl/G_gap and then fp1 G_cl with no improvement in compare_to_targets, ending goal_ok=false despite physics_ok=true.",
+   "applicability": {
+    "task_types": [
+     "tune",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "Splitter",
+     "Mixer"
+    ],
+    "topology_constraints": [
+     "parallel"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "One Tf target is far off; repeated set_parameter on FuelPin conductances leaves compare_to_targets unchanged; all coolant temperatures and mass/energy checks remain OK.",
+   "recommended_strategy": "Before parameter sweeps, inspect which component output is being measured and whether the target is sensitive to the chosen parameter; if a parameter change produces zero response in the measured value, stop sweeping and check routing/measurement or boundary-condition faults.",
+   "action_template": [
+    "run_simulation(stop_time=<T>)",
+    "compare_to_targets(stop_time=<T>)",
+    "set_parameter(instance=<candidate>, parameter=<candidate_param>, value=<trial>)",
+    "compare_to_targets(stop_time=<T>)",
+    "if measured_value_unchanged: inspect() and check routing/measurement before further tuning"
+   ],
+   "known_pitfalls": [
+    "Do not assume a large conductance change must affect Tf; the simulator may report a different branch's fuel temperature.",
+    "Do not keep increasing G_cl by orders of magnitude after two zero-response trials.",
+    "Do not modify a healthy branch parameter when the off-target measurement belongs to another branch."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_R_0335"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.82
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 19,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 19
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:40:26+00:00",
+   "updated_at": "2026-11-06T18:40:26+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_2F2FD0EB",
+   "type": "failure",
+   "title": "Input-to-input and output-to-output wiring",
+   "description": "In FuelPin/Channel pairs, FuelPin.Tcool is an input and must be driven by the paired Channel.Tavg output, not by Channel.Tin, Splitter.T*, or another FuelPin input. This is inferred from the port table and confirmed by successful loop/sensor_loop/parallel3 models where Channel.Tavg->FuelPin.Tcool yields steady conservation and design temperatures. It matters because FuelPin heat transfer needs the coolant bulk/average temperature, while Channel.Tin is an inlet boundary input.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "tune",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "Splitter",
+     "Mixer"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow",
+     "off-design operating points"
+    ]
+   },
+   "problem_signature": "add_connect reports 'both are inputs' or 'both are outputs'; unconnected inputs persist after a batch of rejected connections.",
+   "recommended_strategy": "For each FuelPin/Channel pair, connect the Channel.Tavg output to that FuelPin.Tcool input; connect Channel.Tin from an upstream temperature source such as SteamGenerator.Tout, Splitter.T1/T2, or Sensor.y depending on topology.",
+   "action_template": [
+    "inspect()",
+    "classify(<source_port>) as output and <target_port> as input",
+    "connect(<source_output>, <target_input>)"
+   ],
+   "known_pitfalls": [
+    "Splitter.T and Splitter.m are inputs; Splitter.T1/T2/m1/m2 are outputs.",
+    "Mixer.T and Mixer.m are outputs; Mixer.T1/T2/m1/m2 are inputs.",
+    "Channel.Tin/mdot/Q_fuel are inputs; Channel.Tout/Tavg are outputs.",
+    "FuelPin.Tcool/Q_fission are inputs; FuelPin.Tf/Tc/Qcool are outputs."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_R_0335",
+     "EVO_parallel3_A_0283",
+     "EVO_loop_T_0379"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.97
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 14,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 14
+   },
+   "status": "verified",
+   "version": 3,
+   "created_at": "2026-11-06T18:40:26+00:00",
+   "updated_at": "2026-11-06T18:46:04+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:44:45+00:00",
+      "reason": "task EVO_parallel3_A_0283",
+      "before": {
+       "description": "Assembly attempts fail structurally when connections are proposed from an input port or to an output port. Ep4 tried ch.Tin->sg.Tin and ch.Tin->fp.Tcool; Ep6 tried split1.T->fp*.Tcool, ch*.Tout->mix1.T, and mix*.m1->ch*.mdot; all were rejected because both endpoints were inputs or outputs. These are tool/format-level direction errors, not physics errors.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "multistep"
+        ],
+        "component_types": [
+         "Channel",
+         "FuelPin",
+         "Splitter",
+         "Mixer",
+         "SteamGenerator",
+         "Sensor"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Use the port table to classify every endpoint before calling add_connect; only connect output->input. For Mixer inputs T1/m1/T2/m2, drive them from Channel.Tout and Splitter.m1/m2 or equivalent flow outputs, not from Mixer.m or Channel.mdot."
+      }
+     },
+     {
+      "from_version": 2,
+      "at": "2026-11-06T18:46:04+00:00",
+      "reason": "task EVO_loop_T_0379",
+      "before": {
+       "description": "In FuelPin/Channel pairs, the FuelPin.Tcool input must be driven by the paired Channel.Tavg output, and Channel.Q_fuel must be driven by the paired FuelPin.Qcool output. This closes the conjugate heat-transfer loop: fission power enters FuelPin.Q_fission, heat leaves as Qcool, and the coolant temperature seen by the pin is the channel average temperature, not inlet or outlet temperature. Using Channel.Tout or a global Const for Tcool can still compile but gives wrong fuel temperatures or violates the intended thermal coupling.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "tune",
+         "diagnose",
+         "multistep"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "single-phase coolant heating"
+        ]
+       },
+       "recommended_strategy": "For each FuelPin/Channel pair, verify the local three-port heat path: PowerSource.P -> FuelPin.Q_fission, FuelPin.Qcool -> Channel.Q_fuel, Channel.Tavg -> FuelPin.Tcool. Do not substitute Channel.Tin or Channel.Tout for Tcool."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_AC5B812D",
+   "type": "rule",
+   "title": "FuelPin inputs require outputs, not sibling inputs",
+   "description": "In FuelPin/Channel assemblies and recirculating loops, the coolant temperature seen by FuelPin.Tcool is the Channel.Tavg output, not Channel.Tout. Episode 3 succeeded with connect(ch.Tavg, fp.Tcool), and episodes 2/4 retained this connection while all coolant-side targets were already correct; replacing Tavg with Tout in episode 1 changed Tf away from the first-stage target. This is inferred from the port table plus the simulated sensitivity of Tf to the Tcool source.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "tune",
+     "diagnose"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "PowerSource",
+     "SteamGenerator"
+    ],
+    "topology_constraints": [
+     "series",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "add_connect rejects pairs as 'both are inputs'; unconnected inputs include fp.Tcool and ch.Q_fuel",
+   "recommended_strategy": "Keep or restore connect(<channel>.Tavg, <fuelpin>.Tcool); do not use <channel>.Tout for FuelPin.Tcool unless a task explicitly defines a different component contract.",
+   "action_template": [
+    "connect(<powersource>.P, <fuelpin>.Q_fission)",
+    "connect(<channel>.Tavg, <fuelpin>.Tcool)",
+    "connect(<fuelpin>.Qcool, <channel>.Q_fuel)",
+    "connect(<tin_const>.y, <first_channel>.Tin)",
+    "connect(<mdot_const>.y, <channel>.mdot)"
+   ],
+   "known_pitfalls": [
+    "Using an input port as a source",
+    "Trying to replace a connection that was never added",
+    "Duplicating an existing connection instead of adding the missing one"
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series3_T_0103",
+     "EVO_series2_A_0088"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.95
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 11,
+    "used": 11,
+    "positive_transfer": 4,
+    "negative_transfer": 7,
+    "tasks_seen": 11
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:41:17+00:00",
+   "updated_at": "2026-11-06T18:56:33+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:56:32+00:00",
+      "reason": "task EVO_series2_A_0088",
+      "before": {
+       "description": "For FuelPin/Channel assemblies, FuelPin.Q_fission must be driven by PowerSource.P, FuelPin.Tcool by Channel.Tavg, and Channel.Q_fuel by FuelPin.Qcool. Connecting FuelPin.Tcool to Channel.Tin or FuelPin.Q_fission to Channel.Q_fuel is structurally invalid because both are inputs; episode 4 repeatedly hit this error, while episode 5 succeeded after using Channel.Tavg -> FuelPin.Tcool and FuelPin.Qcool -> Channel.Q_fuel.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "multistep"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "PowerSource",
+         "Const"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "energy balance"
+        ]
+       },
+       "recommended_strategy": "Use the port table to classify each connector before editing. For each FuelPin/Channel pair, add the three output-to-input links: PowerSource.P -> FuelPin.Q_fission, Channel.Tavg -> FuelPin.Tcool, FuelPin.Qcool -> Channel.Q_fuel; then drive Channel.Tin and Channel.mdot from boundary or upstream outputs."
+      }
+     }
+    ]
+   },
+   "probe": {
+    "kind": "connection_driver",
+    "component": "FuelPin",
+    "port": "Tcool",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tavg"
+    },
+    "alternative_source": {
+     "component": "Channel",
+     "port": "Tin"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_5BC8B744",
+   "type": "failure",
+   "title": "Missing fission link under-determines otherwise wired plants",
+   "description": "In repair tasks with parallel or series FuelPin/Channel branches, a single missing PowerSource.P -> FuelPin.Q_fission connection can make the model under-determined even when all other thermal-hydraulic links look plausible. Episodes 2 and 3 showed BUILD FAILED/too few equations or an unconnected Q_fission input, and adding that one link made physics and all design targets pass.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "multistep",
+     "assemble"
+    ],
+    "component_types": [
+     "PowerSource",
+     "FuelPin",
+     "Channel",
+     "Splitter",
+     "Mixer"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "energy balance"
+    ]
+   },
+   "problem_signature": "Under-determined system or unconnected FuelPin.Q_fission while other branch connections are present",
+   "recommended_strategy": "Before tuning parameters, enumerate all input connectors and compare against the required count. If a FuelPin.Q_fission input is unconnected, connect the corresponding PowerSource.P output, then run check_physics and compare_to_targets before any parameter edits.",
+   "action_template": [
+    "inspect()",
+    "identify_unconnected_inputs()",
+    "connect(<powersource>.P, <fuelpin>.Q_fission)",
+    "check_physics(<stop_time>)",
+    "compare_to_targets(<stop_time>)"
+   ],
+   "known_pitfalls": [
+    "Assuming a shared PowerSource output automatically drives all FuelPins without explicit connect statements",
+    "Treating an under-determined build as a parameter tuning problem",
+    "Submitting after compare_to_targets without checking structural completeness"
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series3_T_0103"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.93
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 2,
+    "used": 2,
+    "positive_transfer": 0,
+    "negative_transfer": 2,
+    "tasks_seen": 2
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:41:23+00:00",
+   "updated_at": "2026-11-06T18:41:23+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "FuelPin",
+    "port": "Q_fission",
+    "claimed_source": {
+     "component": "PowerSource",
+     "port": "P"
+    },
+    "alternative_source": {
+     "component": "FuelPin",
+     "port": "Qcool"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_53A853AA",
+   "type": "rule",
+   "title": "Loop temperature direction is Channel.Tout to SteamGenerator.Tin",
+   "description": "For loop plants with Channel and SteamGenerator, the hot-leg temperature signal must be driven by Channel.Tout into SteamGenerator.Tin, and the cold-leg return must be driven by SteamGenerator.Tout into Channel.Tin. Episode 6 succeeded with connect(ch.Tout, sg.Tin) and connect(sg.Tout, ch.Tin); Episode 1's sensor_loop variant inserted Sensor between Channel.Tout and SteamGenerator.Tin and also passed all targets. Reversing these directions, as in Episode 6 step 3's sg.Tin -> ch.Tout attempt, is a structural error because sg.Tin is an input, not an output.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "SteamGenerator",
+     "Sensor",
+     "Const",
+     "FuelPin",
+     "PowerSource"
+    ],
+    "topology_constraints": [
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Unconnected ch.Tin or sg.Tin; attempted connection from an input port such as sg.Tin or ch.Tin; Thot/Tcold nonsensical",
+   "recommended_strategy": "Use the port table to classify outputs and inputs before adding connections. Drive sg.Tin from ch.Tout or sens.y when a Sensor is present, drive ch.Tin from sg.Tout, and drive both mdot inputs from the same Const.y.",
+   "action_template": [
+    "connect(<channel>.Tout, <steamgenerator>.Tin)",
+    "connect(<steamgenerator>.Tout, <channel>.Tin)",
+    "connect(<mdot_const>.y, <channel>.mdot)",
+    "connect(<mdot_const>.y, <steamgenerator>.mdot)"
+   ],
+   "known_pitfalls": [
+    "In sensor_loop topology, use connect(<channel>.Tout, <sensor>.y_in) and connect(<sensor>.y, <steamgenerator>.Tin) instead of bypassing the Sensor.",
+    "Do not connect an input port as a source; add_connect rejects input-to-input pairs."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_T_0468"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.95
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 12,
+    "used": 12,
+    "positive_transfer": 7,
+    "negative_transfer": 5,
+    "tasks_seen": 12
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:42:22+00:00",
+   "updated_at": "2026-11-06T18:42:22+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "SteamGenerator",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "SteamGenerator",
+     "port": "Tout"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_7A220EDE",
+   "type": "rule",
+   "title": "FuelPin Tcool uses paired Channel.Tavg",
+   "description": "In series or loop plants with FuelPin and Channel pairs, a FuelPin.Tcool input must be driven by the paired Channel.Tavg output, not by a Const flow value or the Channel.Tout. This is inferred from the port table and supported by Ep1, Ep2, Ep3, and Ep4: using mdot.y or Tout for Tcool produced fuel-temperature target misses, while Tavg restored the expected fuel temperature. The coolant temperature seen by the pin is the channel average temperature used in the fuel-to-coolant heat-transfer law.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "FuelPin Tf or Tc is far off while Channel outlet temperatures and mdot are correct; Tcool is driven by a flow Const or Tout.",
+   "recommended_strategy": "For each FuelPin/Channel heat-transfer pair, check that connect(<channel>.Tavg, <fuelpin>.Tcool) exists exactly once and that no other source drives <fuelpin>.Tcool. Do not tune G_gap or G_cl until this structural rule is satisfied.",
+   "action_template": [
+    "remove_connect(<wrong_source>, <fuelpin>.Tcool)",
+    "connect(<paired_channel>.Tavg, <fuelpin>.Tcool)"
+   ],
+   "known_pitfalls": [
+    "Using Channel.Tin or Channel.Tout as FuelPin.Tcool can still compile and conserve energy locally but miss the design fuel temperature.",
+    "Driving FuelPin.Tcool from a Const.mdot output is a type/meaning error even if the tool accepts the connection."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series3_R_0068",
+     "EVO_series2_T_0543",
+     "EVO_parallel3_R_0178",
+     "EVO_single_A_0539"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.95,
+    "supporting_topologies": [
+     "series2",
+     "parallel3",
+     "single"
+    ]
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:43:16+00:00",
+   "updated_at": "2026-11-06T18:55:42+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "FuelPin",
+    "port": "Tcool",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tavg"
+    },
+    "alternative_source": {
+     "component": "Channel",
+     "port": "Tout"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_72B8CD46",
+   "type": "rule",
+   "title": "Loop SteamGenerator closes hot-to-cold leg",
+   "description": "In a loop plant with Channel and SteamGenerator, Channel.Tout must drive SteamGenerator.Tin, and SteamGenerator.Tout must drive Channel.Tin. This is inferred from the hot-leg/cold-leg energy balance and demonstrated by Ep3, which met all loop targets with that closure. Ep5 instead connected sg.Tout to sg.Tin, producing Qsg=0, Tcold equal to Tsec, and an unconnected sg.Tin in the verifier.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "SteamGenerator"
+    ],
+    "topology_constraints": [
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Loop Qsg is zero or near zero, cold-leg temperature collapses to secondary temperature, or SteamGenerator.Tin is self-driven/unconnected.",
+   "recommended_strategy": "Close the loop with two distinct temperature connections: connect(<channel>.Tout, <sg>.Tin) and connect(<sg>.Tout, <channel>.Tin). Also drive both mdot inputs from the flow Const.y. Never connect an input to an output of the same component as a substitute for the missing hot-leg driver.",
+   "action_template": [
+    "connect(<channel>.Tout, <sg>.Tin)",
+    "connect(<sg>.Tout, <channel>.Tin)",
+    "connect(<mdot_const>.y, <channel>.mdot)",
+    "connect(<mdot_const>.y, <sg>.mdot)"
+   ],
+   "known_pitfalls": [
+    "A self-connection such as sg.Tout->sg.Tin may be accepted by the editor but leaves the real hot-leg input undriven and destroys heat removal.",
+    "check_physics can report component conservation PASS for a degenerate loop with Qsg=0; compare_to_targets and structural checks are still required."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series3_R_0068"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.96
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:43:49+00:00",
+   "updated_at": "2026-11-06T18:43:49+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "SteamGenerator",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "SteamGenerator",
+     "port": "Tout"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_279C2F0C",
+   "type": "rule",
+   "title": "Series channels pass Tout to next Tin",
+   "description": "In series Channel chains, the downstream Channel.Tin input must be driven by the immediately upstream Channel.Tout output, while all Channel.mdot inputs are driven by the common flow Const or Splitter mass output. Ep3 showed that connecting the inlet Const to both ch1.Tin and ch2.Tin made the model build and conserve energy but missed the downstream design temperatures; Ep4 and Ep6 show the intended series thermal path with ch1.Tout->ch2.Tin and ch2.Tout->ch3.Tin. This is an inference from the port table and energy conservation: downstream coolant inlet enthalpy equals upstream outlet enthalpy.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "tune",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "Const",
+     "FuelPin"
+    ],
+    "topology_constraints": [
+     "series"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "same mass flow through series channels"
+    ]
+   },
+   "problem_signature": "All Channel.Tin inputs tied to the same inlet Const in a series plant; downstream T2/T3 too low while upstream T1 is correct.",
+   "recommended_strategy": "Drive only the first Channel.Tin from the inlet temperature Const. For each later channel, connect the previous Channel.Tout to the next Channel.Tin. Keep mass flow common from the flow Const to every Channel.mdot.",
+   "action_template": [
+    "connect(<tin_const>.y, <first_channel>.Tin)",
+    "connect(<upstream_channel>.Tout, <downstream_channel>.Tin)",
+    "connect(<mdot_const>.y, <channel>.mdot)"
+   ],
+   "known_pitfalls": [
+    "Do not use Channel.Tavg as the downstream inlet; the outlet temperature is the stream state after full heat addition.",
+    "Do not leave a downstream Channel.Tin unconnected; that causes an under-determined build failure.",
+    "Do not connect a downstream Tin to the inlet Const unless the task explicitly describes parallel branches."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_parallel3_A_0283"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.88
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 1,
+    "used": 1,
+    "positive_transfer": 0,
+    "negative_transfer": 1,
+    "tasks_seen": 1
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:44:59+00:00",
+   "updated_at": "2026-11-06T18:44:59+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "Channel",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "Const",
+     "port": "y"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_DBFF97A7",
+   "type": "skill",
+   "title": "Assemble parallel2 by signal class",
+   "description": "For Splitter-fed parallel Channel branches, Splitter.T1/T2 outputs drive Channel.Tin inputs and Splitter.m1/m2 outputs drive Channel.mdot inputs; Mixer.m1/m2 inputs must receive the corresponding branch mass-flow signals, not temperatures or heat. Ep1 repeatedly mixed split1.m2 into Mixer.m1/m2 and left ch2.mdot wrong; Ep5 had ps.P driving ch1.mdot and split1.m1 driving fp3.Q_fission, producing zero heating in branches and structural failure.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Splitter",
+     "Channel",
+     "Mixer",
+     "FuelPin",
+     "PowerSource",
+     "Const"
+    ],
+    "topology_constraints": [
+     "parallel"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "Under-determined build with unconnected FuelPin.Tcool, Channel.Tin, FuelPin.Q_fission, Channel.Q_fuel, or Mixer.T/m inputs.",
+   "recommended_strategy": "Build a port-class table before editing: temperature sources go to T/Tin inputs, mass-flow sources go to m/mdot inputs, and PowerSource.P goes only to FuelPin.Q_fission. Then check each Mixer.mi driver is the same mass-flow signal used by the corresponding Channel.mdot.",
+   "action_template": [
+    "connect(<tin_const>.y, <splitter>.T)",
+    "connect(<mdot_const>.y, <splitter>.m)",
+    "connect(<splitter>.T1, <channel1>.Tin)",
+    "connect(<splitter>.T2, <channel2>.Tin)",
+    "connect(<splitter>.m1, <channel1>.mdot)",
+    "connect(<splitter>.m2, <channel2>.mdot)",
+    "connect(<power_source>.P, <fuelpin1>.Q_fission)",
+    "connect(<power_source>.P, <fuelpin2>.Q_fission)",
+    "connect(<fuelpin1>.Qcool, <channel1>.Q_fuel)",
+    "connect(<fuelpin2>.Qcool, <channel2>.Q_fuel)"
+   ],
+   "known_pitfalls": [
+    "Do not connect Splitter.T1/T2 directly to Mixer.T1/T2 when Channel outlets are required by the design point.",
+    "Do not use Channel.mdot as a source for Mixer.m1/m2; Channel.mdot is an input.",
+    "Do not connect FuelPin.Q_fission to Channel.Q_fuel; both are inputs.",
+    "Do not use an instance name such as mdot as a port; use mdot.y."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_loop_T_0379",
+     "EVO_parallel3_R_0178",
+     "EVO_single_R_0399",
+     "EVO_parallel2_A_0366"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.9
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 18,
+    "used": 18,
+    "positive_transfer": 6,
+    "negative_transfer": 12,
+    "tasks_seen": 18
+   },
+   "status": "verified",
+   "version": 6,
+   "created_at": "2026-11-06T18:46:07+00:00",
+   "updated_at": "2026-11-06T18:54:29+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:50:59+00:00",
+      "reason": "task EVO_parallel3_R_0178",
+      "before": {
+       "description": "For parallel2 assembly with Splitter/Mixer, wire by signal class: boundary Const.y to Splitter.T/m, Splitter.T1/T2 to Channel.Tin, Splitter.m1/m2 to Channel.mdot and Mixer.m1/m2, PowerSource.P to each FuelPin.Q_fission, FuelPin.Qcool to paired Channel.Q_fuel, Channel.Tavg to paired FuelPin.Tcool, and Channel.Tout to Mixer.T1/T2. Episodes 2 and 4 fail because they repeatedly try FuelPin.Tcool->Channel.Tin, use instances instead of ports, duplicate connections, and leave FuelPin.Tcool or Mixer inputs unconnected. This procedure applies when the task requires every input driven exactly once and outputs may fan out.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "multistep"
+        ],
+        "component_types": [
+         "PowerSource",
+         "Const",
+         "FuelPin",
+         "Channel",
+         "Splitter",
+         "Mixer"
+        ],
+        "topology_constraints": [
+         "parallel"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "off-design operating points"
+        ]
+       },
+       "recommended_strategy": "List all 16 input connectors, assign one output driver to each by physical quantity, then add only missing connections in one batch; after partial acceptance, re-read the model before adding more."
+      }
+     },
+     {
+      "from_version": 2,
+      "at": "2026-11-06T18:51:12+00:00",
+      "reason": "task EVO_parallel3_R_0178",
+      "before": {
+       "description": "In repair/assembly tasks with Channel components, each Channel.Tin, Channel.mdot, and Channel.Q_fuel input must be driven exactly once by a temperature source, mass-flow source, and heat source respectively. A missing one often appears as an under-determined build; a duplicate or input-to-input connection appears as over-determined or rejected. This does not apply when the task explicitly changes library semantics or allows unconnected ports.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "multistep",
+         "diagnose"
+        ],
+        "component_types": [
+         "Channel",
+         "Splitter",
+         "Mixer",
+         "FuelPin",
+         "Const",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Inspect the port table, enumerate all input connectors, and compare against existing connect statements by signal class. Add only output-to-input connections; remove duplicates before adding a replacement."
+      }
+     },
+     {
+      "from_version": 3,
+      "at": "2026-11-06T18:53:17+00:00",
+      "reason": "task EVO_single_R_0399",
+      "before": {
+       "description": "For parallel plants with Splitter, Channel, and Mixer components, a common repair is to restore the missing temperature path while preserving mass-flow paths. Episodes 1 and 6 succeeded by adding one missing output-to-input connection: split2.T2 -> ch2.Tin in a parallel3 plant and ch2.Tout -> mix1.T2 in a parallel2 plant. The procedure is to use the port table to find the single unconnected input, add exactly one legal output-to-input connection, then verify build, physics, and targets; it does not apply to parameter-only tuning tasks.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "assemble",
+         "multistep"
+        ],
+        "component_types": [
+         "Splitter",
+         "Channel",
+         "Mixer",
+         "FuelPin",
+         "Const",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "parallel"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Inspect the model, identify the unconnected input from the port table, choose the corresponding upstream temperature output from the same branch, add one connection, and re-run the full verification sequence."
+      }
+     },
+     {
+      "from_version": 4,
+      "at": "2026-11-06T18:53:23+00:00",
+      "reason": "task EVO_single_R_0399",
+      "before": {
+       "description": "In single and loop plants with PowerSource, FuelPin, Channel, and boundary Const components, PowerSource.P is a heat-generation signal and must drive FuelPin.Q_fission, not a temperature or flow input. The inlet temperature Const drives Channel.Tin directly in single plants or via SteamGenerator.Tout in loop plants; Channel.Tavg drives FuelPin.Tcool; FuelPin.Qcool drives Channel.Q_fuel; and the flow Const drives Channel.mdot and, in loop plants, SteamGenerator.mdot. This follows from the port table and conservation laws: fission power enters the fuel, fuel heat enters the coolant channel, and the fuel convective boundary sees the channel average coolant temperature.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "diagnose",
+         "multistep"
+        ],
+        "component_types": [
+         "PowerSource",
+         "FuelPin",
+         "Channel",
+         "Const",
+         "SteamGenerator"
+        ],
+        "topology_constraints": [
+         "series",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "Before simulating, classify each connector by signal type: power, temperature, mass flow, and heat-to-coolant. Verify every input has exactly one output driver of the same physical class, then run check_physics and compare_to_targets."
+      }
+     },
+     {
+      "from_version": 5,
+      "at": "2026-11-06T18:54:29+00:00",
+      "reason": "task EVO_parallel2_A_0366",
+      "before": {
+       "description": "For parallel2 plants with Splitter, two Channel/FuelPin branches, and Mixer, Splitter.T1/T2 drive Channel.Tin inputs, Splitter.m1/m2 drive Channel.mdot inputs, Channel.Tout outputs drive Mixer.T1/T2, and Splitter.m1/m2 also drive Mixer.m1/m2. Mixer temperature inputs must not receive mass-flow outputs, and Channel.mdot must not receive a temperature output. This is inferred from the port table and conservation laws: temperature and mass-flow signals have different units and the Mixer needs both branch outlet temperatures and branch mass flows to conserve energy.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair",
+         "diagnose",
+         "multistep"
+        ],
+        "component_types": [
+         "Splitter",
+         "Channel",
+         "FuelPin",
+         "Mixer",
+         "Const",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "parallel"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Repair parallel2 by enumerating all 16 inputs and assigning drivers by signal class. Preserve the Splitter-to-Channel mass-flow paths and the Channel.Tout-to-Mixer temperature paths; do not sacrifice one branch's mdot to fix a Mixer temperature input."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_CF7F17DC",
+   "type": "failure",
+   "title": "Input-to-input and duplicate edits invalidate structure",
+   "description": "In repair and multistep tasks, replacing a connection with an input-to-input pair or adding an already existing pair causes structural failure even when the intended physical diagnosis is right. Ep1 repeatedly tried Channel.Tin -> FuelPin.Tcool and left fp.Tcool unconnected; Ep2 created duplicate SteamGenerator.Tout -> Channel.Tin and left SteamGenerator.Tin unconnected. These are tool/format and structural errors, not parameter or goal errors.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "multistep",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "FuelPin",
+     "SteamGenerator",
+     "Sensor"
+    ],
+    "topology_constraints": [
+     "loop",
+     "series",
+     "parallel"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Tool says 'both are inputs', 'duplicate', 'no valid connections added', or verifier reports unconnected_inputs/build_ok=false after a sequence of replace/add calls.",
+   "recommended_strategy": "After each edit, read the tool response for unconnected inputs and duplicates. If a replacement removes a driver, immediately restore a valid output-to-input connection from the port table. Do not repeat the same invalid add_connect; recompute the missing input and choose an output port with the correct physical quantity.",
+   "action_template": [
+    "read_file(<model>)",
+    "replace_connect(old=<output,input>, new=<valid_output,input>)",
+    "if unconnected_inputs: add_connect([<valid_output, unconnected_input>])",
+    "check_physics(<stop_time>)"
+   ],
+   "known_pitfalls": [
+    "Do not treat an input connector as a source because its name contains a temperature or flow value.",
+    "Do not add a connection that already exists; use replace_connect only when changing the source or target.",
+    "Do not diagnose a structural error as wrong_parameter when conservation failures are caused by missing or invalid drivers."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_M_0559"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.95
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 1,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 1
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:46:58+00:00",
+   "updated_at": "2026-11-06T18:46:58+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_6C31098E",
+   "type": "skill",
+   "title": "Assemble loop from conservation topology",
+   "description": "In assembly/repair tasks with FuelPin and Channel components, a FuelPin.Tcool input must be driven by the corresponding Channel.Tavg output, not by FuelPin.Tcool, Channel.Tin, or another input. This is inferred from the port table and supported by episodes where connect(Channel.Tavg, FuelPin.Tcool) produced steady, conservation-passing models; using Channel.Tout for a FuelPin.Tcool in episode 1 still left the design point unmet. Channel.Tavg is the coolant temperature seen by the fuel heat-transfer law, while Tin/Tout are channel boundary states.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Incomplete loop model with TODO connections, or repair model with all inputs connected but wrong routing and large temperature/energy failures.",
+   "recommended_strategy": "Check every FuelPin.Tcool driver against the port table; connect the paired Channel.Tavg output to FuelPin.Tcool. Do not connect input-to-input ports such as FuelPin.Tcool -> Channel.Tin.",
+   "action_template": [
+    "add_connect([[<powersource>.P, <fuelpin>.Q_fission], [<fuelpin>.Qcool, <channel>.Q_fuel], [<channel>.Tavg, <fuelpin>.Tcool], [<channel>.Tout, <steamgenerator>.Tin], [<steamgenerator>.Tout, <channel>.T",
+    "run_simulation(<stop_time>)",
+    "check_physics(<stop_time>)",
+    "compare_to_targets(<stop_time>)",
+    "submit()"
+   ],
+   "known_pitfalls": [
+    "For sensor_loop, replace Channel.Tout -> SteamGenerator.Tin with Channel.Tout -> Sensor.y_in and Sensor.y -> SteamGenerator.Tin.",
+    "Do not connect Sensor.y to Channel.Q_fuel; Q_fuel requires FuelPin.Qcool heat flow.",
+    "Do not omit either mdot driver; Channel and SteamGenerator both need the loop mass flow."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_sensor_loop_M_0559",
+     "EVO_series2_A_0151"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class structure: observed"
+    },
+    "teacher_confidence": 0.97
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 7,
+    "used": 7,
+    "positive_transfer": 3,
+    "negative_transfer": 4,
+    "tasks_seen": 7
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:46:58+00:00",
+   "updated_at": "2026-11-06T18:52:08+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:52:08+00:00",
+      "reason": "task EVO_series2_A_0151",
+      "before": {
+       "description": "For loop assembly tasks with PowerSource, FuelPin, Channel, SteamGenerator, and Const, a demonstrated successful procedure is to add all seven drivers in one batch using conservation topology: power to FuelPin.Q_fission, FuelPin.Qcool to Channel.Q_fuel, Channel.Tavg to FuelPin.Tcool, Channel.Tout to SteamGenerator.Tin, SteamGenerator.Tout to Channel.Tin, and Const.y to both Channel.mdot and SteamGenerator.mdot. Ep4 passed simulation, physics, and targets with this exact topology. For sensor-loop variants, insert Sensor between Channel.Tout and SteamGenerator.Tin.",
+       "applicability": {
+        "task_types": [
+         "assemble",
+         "repair"
+        ],
+        "component_types": [
+         "PowerSource",
+         "FuelPin",
+         "Channel",
+         "SteamGenerator",
+         "Const",
+         "Sensor"
+        ],
+        "topology_constraints": [
+         "loop",
+         "series"
+        ],
+        "physical_conditions": [
+         "steady state",
+         "recirculating flow"
+        ]
+       },
+       "recommended_strategy": "Enumerate every input connector from the port table, assign one output driver with matching physical quantity, then run simulation/check_physics/compare_to_targets before submitting. Use Sensor only as a pass-through measurement in the hot-leg temperature path, not as a heat or flow source."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_A088D052",
+   "type": "rule",
+   "title": "Series Channel Tin follows upstream Tout",
+   "description": "In series Channel chains, only the first Channel.Tin is driven by the inlet boundary Const.y; each downstream Channel.Tin must be driven by the immediately upstream Channel.Tout. Episode 3 failed because ch2.Tin and ch3.Tin were both driven from tin.y, so T2 and T3 stayed near the first-stage outlet instead of accumulating heat along the series path. This is a structural routing rule inferred from conservation of energy along a single coolant stream.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "Const"
+    ],
+    "topology_constraints": [
+     "series"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "All input connectors are connected, but downstream Channel outlet temperatures are too low or equal to the first-stage outlet; Tin boundary is fanned out to multiple Channel.Tin inputs.",
+   "recommended_strategy": "Count series stages and wire temperature sequentially: boundary Const.y -> first Channel.Tin, first Channel.Tout -> second Channel.Tin, second Channel.Tout -> third Channel.Tin, and so on. Keep mdot boundary fanned out to every Channel.mdot in the same series stream.",
+   "action_template": [
+    "connect(<tin_const>.y, <first_channel>.Tin)",
+    "connect(<upstream_channel>.Tout, <downstream_channel>.Tin)",
+    "connect(<mdot_const>.y, <each_channel>.mdot)"
+   ],
+   "known_pitfalls": [
+    "Driving every Channel.Tin from the same inlet Const satisfies 'all inputs connected' but violates series energy accumulation.",
+    "Changing FuelPin.Tcool from Tavg to Tout does not fix downstream Tin routing."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_T_0543"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.95
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:49:50+00:00",
+   "updated_at": "2026-11-06T18:49:50+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "Channel",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "Const",
+     "port": "y"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_5E45FDE3",
+   "type": "rule",
+   "title": "SteamGenerator.mdot needs explicit driver",
+   "description": "In loop or sensor-loop plants with Channel and SteamGenerator in series, the SteamGenerator.mdot input must be driven by the same flow Const.y as Channel.mdot. Episode 6 initially failed to build with an under-determined system because sg.mdot was unconnected; adding connect(mdot.y, sg.mdot) made the loop steady and met all targets. Episode 2 also succeeded with both ch.mdot and sg.mdot driven from mdot.y.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair"
+    ],
+    "component_types": [
+     "SteamGenerator",
+     "Channel",
+     "Const"
+    ],
+    "topology_constraints": [
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Loop model has Channel.mdot connected but SteamGenerator.mdot missing; build fails as under-determined, or verifier reports unconnected inputs.",
+   "recommended_strategy": "When wiring a recirculating Channel/SteamGenerator loop, fan out the flow Const.y to every mass-flow input in the loop, including Channel.mdot and SteamGenerator.mdot, while temperature closes as Channel.Tout -> SteamGenerator.Tin -> Channel.Tin.",
+   "action_template": [
+    "connect(<mdot_const>.y, <channel>.mdot)",
+    "connect(<mdot_const>.y, <steamgenerator>.mdot)",
+    "connect(<channel>.Tout, <steamgenerator>.Tin)",
+    "connect(<steamgenerator>.Tout, <channel>.Tin)"
+   ],
+   "known_pitfalls": [
+    "Connecting only Channel.mdot leaves the SteamGenerator energy balance underdetermined even if temperature connections form a loop.",
+    "Outputs may fan out; driving both mdot inputs from one Const.y is allowed and required here."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_T_0543"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.96
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:50:02+00:00",
+   "updated_at": "2026-11-06T18:50:02+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "SteamGenerator",
+    "port": "mdot",
+    "claimed_source": {
+     "component": "Const",
+     "port": "y"
+    },
+    "alternative_source": {
+     "component": "Channel",
+     "port": "Tout"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_04D0CFDA",
+   "type": "failure",
+   "title": "Wrong routing diagnosis without port-level diff",
+   "description": "In repair and multistep tasks, recording a generic diagnosis such as wrong_routing and then making identical or unrelated edits does not fix structural faults. Episodes 3 and 5 repeatedly diagnosed wrong_routing but left swapped heat/mass drivers or self-fed FuelPin.Q_fission connections unchanged, so structural_ok remained false. This failure class is structural, not tool-format, physics, or goal tuning; it does not apply when the model already has all inputs correctly driven and only parameters are out of specification.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "multistep",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "FuelPin",
+     "PowerSource",
+     "Const",
+     "Splitter",
+     "Mixer"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "diagnose(wrong_routing) followed by edit_file old==new, duplicate replace_connect, or unchanged simulation results; verifier structural_ok=false.",
+   "recommended_strategy": "After any diagnosis, produce a concrete port-level diff: list each input, its current source, and the required source type. Use replace_connect only when old and new differ and the new source is an output of the correct signal class.",
+   "action_template": [
+    "read_file(<model_path>)",
+    "inspect()",
+    "list_current_drivers()",
+    "identify_wrong_driver(<input_port>)",
+    "replace_connect(old=[<wrong_source>.<port>, <target>.<input>], new=[<correct_source>.<output>, <target>.<input>])",
+    "run_simulation()"
+   ],
+   "known_pitfalls": [
+    "replace_connect with identical old/new returns an error and changes nothing.",
+    "Adding a duplicate connection to repair an unconnected input can create over-determined systems.",
+    "A FuelPin.Qcool -> FuelPin.Q_fission self-loop leaves the intended PowerSource.P driver unused and is a structural fault."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_parallel3_R_0178"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.88
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 4,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 4
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:51:05+00:00",
+   "updated_at": "2026-11-06T18:51:05+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_F8B1D0F8",
+   "type": "rule",
+   "title": "Series Channel.Tin follows upstream Tout",
+   "description": "For series2 plants with two Channel stages, the second Channel.Tin should be driven by the first Channel.Tout when the design point has a higher second-stage outlet temperature than a common inlet boundary would produce. This is an inference from energy balance: with the same mdot and positive Q_fuel, a channel inlet equal to the first outlet raises the second outlet by the second-stage heat addition. Episodes 1 and 4 show that connecting the Const tin output to both Channel.Tin inputs yields T2 too low while T1 is correct.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "tune",
+     "multistep"
+    ],
+    "component_types": [
+     "Const",
+     "Channel",
+     "FuelPin",
+     "PowerSource"
+    ],
+    "topology_constraints": [
+     "series"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "positive heat addition"
+    ]
+   },
+   "problem_signature": "First-stage T1/Tf1 match targets but second-stage T2/Tf2 are low by several percent; both channels are fed from the same inlet temperature constant.",
+   "recommended_strategy": "For a two-stage series coolant path, drive the first Channel.Tin from the inlet Const and the second Channel.Tin from the first Channel.Tout. Re-run simulation and compare T2/Tf2 before changing FuelPin conductances.",
+   "action_template": [
+    "connect(<tin_const>.y, <ch1>.Tin)",
+    "connect(<ch1>.Tout, <ch2>.Tin)"
+   ],
+   "known_pitfalls": [
+    "Fanning out the inlet Const to both Channel.Tin inputs in a series design.",
+    "Trying to fix a low T2 by changing G_gap or G_cl when the missing upstream heat has not been routed into ch2.Tin.",
+    "Confusing this with parallel2 tasks, where Splitter.T1/T2 should drive both Channel.Tin inputs."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_A_0151"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.88
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 6,
+    "used": 5,
+    "positive_transfer": 1,
+    "negative_transfer": 4,
+    "tasks_seen": 6
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:52:19+00:00",
+   "updated_at": "2026-11-06T18:52:19+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "Channel",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "Const",
+     "port": "y"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_22951C2C",
+   "type": "failure",
+   "title": "No-op rewiring wastes repair iterations",
+   "description": "Across assemble, tune, and multistep episodes, agents repeatedly called replace_connect with identical old and new pairs or add_connect with already-existing pairs. These are tool/format errors, not structural or physical repairs: the simulator explicitly reported 'old and new are identical' or 'duplicate'. They consume iterations and leave the actual goal error unchanged.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "tune",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "Channel",
+     "FuelPin",
+     "PowerSource",
+     "Const",
+     "SteamGenerator",
+     "Splitter",
+     "Mixer",
+     "Sensor"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Tool observations say 'old and new are identical; nothing to change', 'duplicate', or 'no valid connections added' while target comparison remains unchanged.",
+   "recommended_strategy": "Before replace_connect, verify old and new pairs differ in at least one endpoint. Before add_connect, check current connections from read_file/inspect and do not resubmit existing pairs. If a connection is already correct, change a different suspected driver or parameter.",
+   "action_template": [
+    "read_file(TaskModel.mo)",
+    "if replace_connect: assert old_pair != new_pair",
+    "if add_connect: assert pair_not_in_current_connections",
+    "apply_changed_repair(<old_pair>, <new_pair>)"
+   ],
+   "known_pitfalls": [
+    "Using remove_connect/add_connect to restore the exact same connection and expecting a different result.",
+    "Submitting a batch where most pairs are duplicates, causing useful new pairs to be obscured by rejections.",
+    "Confusing duplicate-call errors with wrong-routing structural errors."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_A_0151"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.95
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:52:19+00:00",
+   "updated_at": "2026-11-06T18:52:19+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_BAAEBCC8",
+   "type": "failure",
+   "title": "Input-to-input and duplicate connect attempts",
+   "description": "In FuelPin/Channel pairs, the FuelPin.Tcool input must be driven by the paired Channel.Tavg output, not by Channel.Tin, FuelPin.Tf, another FuelPin output, or another branch's Channel.Tavg. This follows from the port table and the thermal feedback loop: the pin sees the coolant temperature in its channel while Qcool drives Channel.Q_fuel. Ep3 showed that using fp2.Tf or ch2.Tavg for fp1.Tcool changed Tf1 and broke physics; self-driving fp1.Tf->fp1.Tcool caused runaway temperature and energy/ordering failures.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Tool errors: 'both are inputs', 'duplicate', 'old and new are identical', or 'unknown tool connect'.",
+   "recommended_strategy": "For each FuelPin/Channel pair, verify the bidirectional heat-coupling pair: connect(<fuelpin>.Qcool, <channel>.Q_fuel) and connect(<channel>.Tavg, <fuelpin>.Tcool). Do not use Channel.Tin or Channel.Tout for Tcool unless a task explicitly defines a different sensor law.",
+   "action_template": [
+    "inspect()",
+    "read_file(<model>)",
+    "replace_connect(old=[<existing_output>, <target_input>], new=[<correct_output>, <target_input>])",
+    "remove_connect(pair=[<wrong_output>, <target_input>])",
+    "add_connect(pairs=[[<correct_output>, <unconnected_input>]])"
+   ],
+   "known_pitfalls": [
+    "Do not call a nonexistent connect tool; available tools include add_connect, replace_connect, and remove_connect.",
+    "Do not use an input port as the first element of a connection pair.",
+    "Do not add a second driver to an already driven input; remove or replace the existing driver first."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_single_R_0399",
+     "EVO_parallel2_A_0366"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.95
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 4,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 4
+   },
+   "status": "verified",
+   "version": 2,
+   "created_at": "2026-11-06T18:53:17+00:00",
+   "updated_at": "2026-11-06T18:54:23+00:00",
+   "lineage": {
+    "revisions": [
+     {
+      "from_version": 1,
+      "at": "2026-11-06T18:54:23+00:00",
+      "reason": "task EVO_parallel2_A_0366",
+      "before": {
+       "description": "In repair tasks, agents repeatedly tried to connect two input ports, such as FuelPin.Q_fission to Channel.Q_fuel or Channel.mdot to Mixer.m2, and tried replace_connect with identical old/new pairs. These are tool/format errors, not physics errors: the simulator rejects them because connections must be output-to-input and a replacement must change the pair. The signature is an explicit error saying both are inputs, duplicate connection, or old and new are identical.",
+       "applicability": {
+        "task_types": [
+         "repair",
+         "assemble",
+         "multistep"
+        ],
+        "component_types": [
+         "FuelPin",
+         "Channel",
+         "Splitter",
+         "Mixer",
+         "Const",
+         "PowerSource"
+        ],
+        "topology_constraints": [
+         "series",
+         "parallel",
+         "loop"
+        ],
+        "physical_conditions": [
+         "steady state"
+        ]
+       },
+       "recommended_strategy": "Use inspect/read_file to build a current driver table before editing. For each desired input, choose an output port from the port table; use add_connect only for missing drivers, replace_connect only when changing an existing driver, and remove_connect before adding a conflicting driver."
+      }
+     }
+    ]
+   },
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_6366EC36",
+   "type": "skill",
+   "title": "Repair by exact driver-table reconciliation",
+   "description": "For repair tasks, a robust procedure is to read the model, inspect the port table, list each input's current driver, and reconcile it against the component-type signal-class rules. Then make one replacement or removal/addition at a time, rerun simulation, check_physics, and compare_to_targets. Episode 1 succeeded with this pattern; episodes 3, 4, and 6 failed when edits created duplicate drivers, left inputs unconnected, or connected input-to-input ports.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "assemble",
+     "multistep"
+    ],
+    "component_types": [
+     "PowerSource",
+     "FuelPin",
+     "Channel",
+     "Const",
+     "Splitter",
+     "Mixer",
+     "SteamGenerator"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Compiles but design point is grossly wrong; temperatures equal power values, Qfuel near zero, or some branch temperatures are enormous.",
+   "recommended_strategy": "Do not edit until the current driver table is explicit. For each wrong driver, replace it with the correct output of the same signal class; after each edit, verify no unconnected inputs and no duplicate drivers before simulating.",
+   "action_template": [
+    "read_file(path=<model>)",
+    "inspect()",
+    "run_simulation(stop_time=<t>)",
+    "check_physics(stop_time=<t>)",
+    "compare_to_targets(stop_time=<t>)",
+    "replace_connect(old=[<wrong_output>, <target_input>], new=[<correct_output>, <target_input>])",
+    "inspect()",
+    "run_simulation(stop_time=<t>)",
+    "check_physics(stop_time=<t>)",
+    "compare_to_targets(stop_time=<t>)"
+   ],
+   "known_pitfalls": [
+    "Do not add a connection before removing the conflicting driver; this can create an overdetermined system.",
+    "Do not treat a close compare_to_targets result as success if inspect reports unconnected inputs.",
+    "Do not use diagnose labels outside the allowed set; use one of swapped_connections, wrong_parameter, wrong_boundary_condition, wrong_routing, or missing_connection."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_single_R_0399"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.93
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:53:29+00:00",
+   "updated_at": "2026-11-06T18:53:29+00:00",
+   "lineage": {},
+   "probe": {}
+  },
+  {
+   "memory_id": "MEM_A1F90A69",
+   "type": "success",
+   "title": "Repair sensor loop by closing coolant path",
+   "description": "For a sensor_loop with Channel, Sensor, SteamGenerator, and Const mdot, the demonstrated successful structure was: Channel.Tout -> Sensor.y_in -> SteamGenerator.Tin, SteamGenerator.Tout -> Channel.Tin, and Const.mdot -> both Channel.mdot and SteamGenerator.mdot. Ep6 reached all targets after replacing sg.Tout->sg.mdot with sg.Tout->ch.Tin, adding mdot.y->sg.mdot, and removing the extra mdot.y->ch.Tin driver; before that, using mdot.y as Channel.Tin produced extreme temperatures and Qsg.",
+   "applicability": {
+    "task_types": [
+     "repair",
+     "assemble",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "Sensor",
+     "SteamGenerator",
+     "Const",
+     "FuelPin",
+     "PowerSource"
+    ],
+    "topology_constraints": [
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "Loop compiles but Thot/Tf/Tc/Qsg are enormous; Channel.Tin is driven by a mass-flow Const, or SteamGenerator.Tout is connected to SteamGenerator.mdot instead of the return coolant temperature input.",
+   "recommended_strategy": "Close the thermal loop with SteamGenerator.Tout driving Channel.Tin, keep Sensor in the hot-leg path to SteamGenerator.Tin, and drive both Channel.mdot and SteamGenerator.mdot from the mass-flow Const. Remove any duplicate driver of Channel.Tin to avoid over-determination.",
+   "action_template": [
+    "connect(<channel>.Tout, <sensor>.y_in)",
+    "connect(<sensor>.y, <steamgenerator>.Tin)",
+    "connect(<steamgenerator>.Tout, <channel>.Tin)",
+    "connect(<mdot_const>.y, <channel>.mdot)",
+    "connect(<mdot_const>.y, <steamgenerator>.mdot)"
+   ],
+   "known_pitfalls": [
+    "A mass-flow Const output is not a cold-leg temperature; connecting it to Channel.Tin gives nonphysical temperatures.",
+    "SteamGenerator.Tout is a temperature output and should not drive SteamGenerator.mdot.",
+    "Adding the correct return-temperature connection while leaving the old Channel.Tin driver creates an over-determined model."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_parallel2_A_0366"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.98
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 5,
+    "used": 5,
+    "positive_transfer": 2,
+    "negative_transfer": 3,
+    "tasks_seen": 5
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:54:38+00:00",
+   "updated_at": "2026-11-06T18:54:38+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "Channel",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "SteamGenerator",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "Const",
+     "port": "y"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_E075F62E",
+   "type": "failure",
+   "title": "Series second-stage inlet must use first Tout",
+   "description": "For two-stage series Channel assemblies with a common inlet Const, driving both Channel.Tin inputs from the same Const makes both channel outlets identical and misses a higher second-stage outlet target. Episode 1 had tin.y connected to both ch1.Tin and ch2.Tin; T1 matched but T2 remained equal to T1 at 607.296 instead of 644.592. The structural fix for a series design is to drive the downstream Channel.Tin from the upstream Channel.Tout, while keeping mdot and fission-power drives on each stage.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "diagnose"
+    ],
+    "component_types": [
+     "Channel",
+     "FuelPin",
+     "PowerSource",
+     "Const"
+    ],
+    "topology_constraints": [
+     "series"
+    ],
+    "physical_conditions": [
+     "steady state"
+    ]
+   },
+   "problem_signature": "Two channels share the same Tin source; first outlet target OK; second outlet equals first outlet and is below a higher target.",
+   "recommended_strategy": "Check whether the design point has distinct T1 and T2. If so, replace the downstream Channel.Tin connection with connect(<upstream_channel>.Tout, <downstream_channel>.Tin), then rerun and compare both outlet and fuel temperatures.",
+   "action_template": [
+    "connect(<inlet_const>.y, <upstream_channel>.Tin)",
+    "connect(<upstream_channel>.Tout, <downstream_channel>.Tin)",
+    "connect(<mdot_const>.y, <upstream_channel>.mdot)",
+    "connect(<mdot_const>.y, <downstream_channel>.mdot)"
+   ],
+   "known_pitfalls": [
+    "Changing FuelPin.Tcool from Channel.Tavg to Channel.Tout only perturbs Tf and does not raise the downstream channel outlet.",
+    "Treating a parallel/common-inlet topology as series when T1 and T2 targets are equal."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_A_0088"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "counterfactual",
+    "probe_result": {
+     "passed": true,
+     "reason": "3/3 tasks reproduced; counterfactual failed on 3"
+    },
+    "teacher_confidence": 0.86
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:56:51+00:00",
+   "updated_at": "2026-11-06T18:56:51+00:00",
+   "lineage": {},
+   "probe": {
+    "kind": "connection_driver",
+    "component": "Channel",
+    "port": "Tin",
+    "claimed_source": {
+     "component": "Channel",
+     "port": "Tout"
+    },
+    "alternative_source": {
+     "component": "Const",
+     "port": "y"
+    }
+   }
+  },
+  {
+   "memory_id": "MEM_81E53EB6",
+   "type": "failure",
+   "title": "No-op edits and invalid diagnose labels waste steps",
+   "description": "Across episodes 1, 2, 3, and 4, tool/format errors occurred when diagnose used free-text labels not in the allowed set, when replace_connect had identical old/new pairs, when add_connect duplicated an existing connection, and when edit_file replaced a line with itself. These are tool/format errors, not structural or physical faults; they leave the model unchanged and can hide the real diagnosis. Use only allowed diagnose labels and verify that each edit changes a connection or parameter before rerunning.",
+   "applicability": {
+    "task_types": [
+     "assemble",
+     "repair",
+     "tune",
+     "diagnose",
+     "multistep"
+    ],
+    "component_types": [
+     "FuelPin",
+     "Channel",
+     "PowerSource",
+     "SteamGenerator",
+     "Const"
+    ],
+    "topology_constraints": [
+     "series",
+     "parallel",
+     "loop"
+    ],
+    "physical_conditions": [
+     "steady state",
+     "recirculating flow"
+    ]
+   },
+   "problem_signature": "ERROR label must be one of [...], old and new are identical, duplicate connection, or simulation results unchanged after an edit.",
+   "recommended_strategy": "Before rerunning, confirm the tool response says a connection/parameter changed. For diagnose, choose only swapped_connections, wrong_parameter, wrong_boundary_condition, wrong_routing, or missing_connection; for parameter faults use wrong_parameter.",
+   "action_template": [
+    "diagnose(label=wrong_parameter|wrong_routing|missing_connection|wrong_boundary_condition|swapped_connections)",
+    "set_parameter(<component>, <parameter>, <different_value>)",
+    "replace_connect(old=<existing_pair>, new=<different_pair>)"
+   ],
+   "known_pitfalls": [
+    "Replacing connect(ch.Tavg, fp.Tcool) with itself.",
+    "Adding a connection that inspect already shows as connected.",
+    "Using labels like 'Tf too high', 'energy_balance', or 'thermal loop imbalance'."
+   ],
+   "evidence": {
+    "source_task_ids": [
+     "EVO_series2_A_0088"
+    ],
+    "source_trajectory_ids": [],
+    "simulation_result_ids": [],
+    "verification_level": "structural",
+    "probe_result": {
+     "passed": true,
+     "reason": "evidence class tool: observed"
+    },
+    "teacher_confidence": 0.99
+   },
+   "counterexamples": [],
+   "usage_statistics": {
+    "retrieved": 0,
+    "used": 0,
+    "positive_transfer": 0,
+    "negative_transfer": 0,
+    "tasks_seen": 0
+   },
+   "status": "verified",
+   "version": 1,
+   "created_at": "2026-11-06T18:56:52+00:00",
+   "updated_at": "2026-11-06T18:56:52+00:00",
+   "lineage": {},
+   "probe": {}
+  }
+ ],
+ "sha1": "3376528f463a27502a679e954f0be4b6ec002943"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "nucevo_v1",
+  "description": "Official NucEvo full configuration (dual-bank training-free evolution + task-aware retrieval).",
+  "solver": {
+    "model": "Qwen3-4B-Instruct-2507",
+    "served_model_name": "solver",
+    "ports": [8011, 8012, 8013, 8014],
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "seed": 0,
+    "max_tokens": 700,
+    "max_model_len": 16384,
+    "stop": ["</tool_call>"]
+  },
+  "retriever": {
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "weights": {
+      "semantic": 0.5,
+      "structural_applicability": 0.3,
+      "historical_utility": 0.2
+    },
+    "memory_char_budget": 4096,
+    "repair_pairing_policy": "top1_verified_plus_top1_episodic_equal_split",
+    "non_repair_policy": "full_verified_bank"
+  },
+  "evolution": {
+    "split": "evolution",
+    "order": "shuffled",
+    "seed": 11,
+    "n_evolution": 120,
+    "parallel_batch": 6,
+    "novel_only": true,
+    "probe_pool_size": 80,
+    "snapshot_every": 20,
+    "checkpoints": [0, 40, 80, 120],
+    "teacher_temperature": 0.0,
+    "teacher_max_tokens": 10000,
+    "teacher_reasoning_effort": "no_think"
+  },
+  "evaluation": {
+    "partition": "test",
+    "splits": ["id_test", "ood_near", "ood_far", "stress"],
+    "workers": 16,
+    "order_seed": 771122,
+    "policies": [
+      "none",
+      "generic",
+      "reasoningbank",
+      "verified_only",
+      "nucevo",
+      "paired_verified",
+      "semantic_episodic"
+    ]
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "benchmark": "NucEvo-Bench v1",
+  "created_at": "2026-11-07T01:45:24",
+  "library_path": "nucevo/benchmark/nuclear_edu/NuclearEdu.mo",
+  "library_sha1": "5e53620ed24c698f214b98f2e0a7b129c0eadb61",
+  "difficulty_labels_path": "data/benchmark_difficulty.json",
+  "difficulty_labels_sha256": "c32aa6ccc4728ca67ee8547a24a70d795f77f3670ae047e368e9558bc719ef52",
+  "total_tasks": 1560,
+  "partitions": {
+    "evolution": [
+      "evolution"
+    ],
+    "validation": [
+      "dev"
+    ],
+    "test": [
+      "id_test",
+      "ood_near",
+      "ood_far",
+      "stress"
+    ]
+  },
+  "splits": {
+    "evolution": {
+      "n": 600,
+      "sha1": "4e85fcbd2ba2a25236f13ca5a04e8bb91bf95daa",
+      "path": "data/evolution/evolution.jsonl",
+      "templates": {
+        "series3": 85,
+        "sensor_loop": 85,
+        "parallel2": 86,
+        "parallel3": 85,
+        "single": 87,
+        "loop": 87,
+        "series2": 85
+      },
+      "families": {
+        "repair": 257,
+        "assemble": 173,
+        "tune": 126,
+        "multistep": 27,
+        "diagnose": 17
+      },
+      "reference_valid": 600,
+      "invalid_rejected": 0,
+      "structural_fingerprints": [
+        "535b29796c7a",
+        "722cd9db882c",
+        "7961eaab9715",
+        "85e4b0239179",
+        "8782376e4eda",
+        "abbc86e945ea",
+        "f72b525b4025"
+      ],
+      "n_structures": 7,
+      "partition": "evolution"
+    },
+    "dev": {
+      "n": 160,
+      "sha1": "6b0b790e614f3ebbfec2b0fd4959056949da15b7",
+      "path": "data/validation/dev.jsonl",
+      "templates": {
+        "single": 25,
+        "loop": 24,
+        "series2": 21,
+        "series3": 23,
+        "parallel2": 22,
+        "sensor_loop": 25,
+        "parallel3": 20
+      },
+      "families": {
+        "repair": 81,
+        "assemble": 45,
+        "tune": 22,
+        "multistep": 7,
+        "diagnose": 5
+      },
+      "reference_valid": 160,
+      "invalid_rejected": 1,
+      "structural_fingerprints": [
+        "535b29796c7a",
+        "722cd9db882c",
+        "7961eaab9715",
+        "85e4b0239179",
+        "8782376e4eda",
+        "abbc86e945ea",
+        "f72b525b4025"
+      ],
+      "n_structures": 7,
+      "partition": "validation"
+    },
+    "id_test": {
+      "n": 240,
+      "sha1": "33c58ca69bad6b0534772d62a6a6008ad414541e",
+      "path": "data/test/id_test.jsonl",
+      "templates": {
+        "sensor_loop": 35,
+        "single": 33,
+        "loop": 34,
+        "parallel2": 34,
+        "parallel3": 33,
+        "series2": 35,
+        "series3": 36
+      },
+      "families": {
+        "repair": 105,
+        "assemble": 75,
+        "multistep": 19,
+        "tune": 28,
+        "diagnose": 13
+      },
+      "reference_valid": 240,
+      "invalid_rejected": 1,
+      "structural_fingerprints": [
+        "535b29796c7a",
+        "722cd9db882c",
+        "7961eaab9715",
+        "85e4b0239179",
+        "8782376e4eda",
+        "abbc86e945ea",
+        "f72b525b4025"
+      ],
+      "n_structures": 7,
+      "partition": "test"
+    },
+    "ood_near": {
+      "n": 240,
+      "sha1": "6785621245c2885fee8f19d9cee3702c3246383f",
+      "path": "data/test/ood_near.jsonl",
+      "templates": {
+        "series4": 80,
+        "two_sg": 80,
+        "parallel4": 80
+      },
+      "families": {
+        "assemble": 98,
+        "repair": 95,
+        "diagnose": 12,
+        "tune": 28,
+        "multistep": 7
+      },
+      "reference_valid": 240,
+      "invalid_rejected": 0,
+      "structural_fingerprints": [
+        "61d9942843c4",
+        "ece4992b5f73",
+        "f3d501833da0"
+      ],
+      "n_structures": 3,
+      "partition": "test"
+    },
+    "ood_far": {
+      "n": 200,
+      "sha1": "55fd110f090da54470f0cdc9af887c73a925ea69",
+      "path": "data/test/ood_far.jsonl",
+      "templates": {
+        "pumped": 42,
+        "controlled": 43,
+        "pumped_controlled": 39,
+        "kinetics_pumped": 39,
+        "kinetics": 37
+      },
+      "families": {
+        "repair": 79,
+        "assemble": 83,
+        "multistep": 6,
+        "tune": 18,
+        "diagnose": 14
+      },
+      "reference_valid": 200,
+      "invalid_rejected": 0,
+      "structural_fingerprints": [
+        "2394b1a261e3",
+        "267e86c3e35e",
+        "56c7ebea7902",
+        "851ca0c806cf",
+        "86ff2bce6e9f"
+      ],
+      "n_structures": 5,
+      "partition": "test"
+    },
+    "stress": {
+      "n": 120,
+      "sha1": "faaf191767826fa2d4a7a022cd9306870313aec9",
+      "path": "data/test/stress.jsonl",
+      "templates": {
+        "single": 13,
+        "loop": 13,
+        "series4": 10,
+        "two_sg": 10,
+        "series2": 13,
+        "series3": 13,
+        "parallel2": 12,
+        "parallel3": 12,
+        "sensor_loop": 12,
+        "parallel4": 12
+      },
+      "families": {
+        "repair": 42,
+        "multistep": 59,
+        "assemble": 19
+      },
+      "reference_valid": 120,
+      "invalid_rejected": 0,
+      "structural_fingerprints": [
+        "535b29796c7a",
+        "61d9942843c4",
+        "722cd9db882c",
+        "7961eaab9715",
+        "85e4b0239179",
+        "8782376e4eda",
+        "abbc86e945ea",
+        "ece4992b5f73",
+        "f3d501833da0",
+        "f72b525b4025"
+      ],
+      "n_structures": 10,
+      "partition": "test"
+    }
+  }
+}
